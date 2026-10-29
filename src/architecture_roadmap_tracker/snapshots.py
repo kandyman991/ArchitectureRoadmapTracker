@@ -313,3 +313,68 @@ def _validate_engine(engine: CommandEngine) -> None:
                 "Invalid audit rationale")
         _ensure(_valid_audit_value(entry.before) and _valid_audit_value(entry.after),
                 "Invalid audit before/after")
+    _verify_audit_replay(engine)
+
+
+def _verify_audit_replay(engine: CommandEngine) -> None:
+    """Historical before/after changes must reproduce the final canonical graph.
+
+    This checks internal consistency, not authentication: an attacker with
+    database access can rewrite a snapshot and its unsigned digest.
+    """
+    names = {name.removeprefix("_"): name for _, name, _ in _BUCKETS}
+    type_to_bucket = {
+        "project": "_projects",
+        "node": "_nodes",
+        "requirement": "_requirements",
+        "dependency": "_dependencies",
+        "architecture_decision": "_architecture_decisions",
+        "decision_proposal": "_decision_proposals",
+    }
+    expected_types = {attr: cls for _, attr, cls in _BUCKETS}
+    replay: dict[str, dict[str, object]] = {attr: {} for _, attr, _ in _BUCKETS}
+    for event in engine._audit:
+        attr = type_to_bucket[event.target_type]
+        records = replay[attr]
+        cls = expected_types[attr]
+        if attr == "_nodes":
+            _ensure(type(event.before) is tuple and type(event.after) is tuple,
+                    "Invalid structural audit shape")
+            previous = event.before
+            updated = event.after
+            _ensure(all(type(v) is cls for v in (*previous, *updated)),
+                    "Invalid structural audit records")
+            old = {v.id: v for v in previous}
+            new = {v.id: v for v in updated}
+            _ensure(len(old) == len(previous) and len(new) == len(updated),
+                    "Duplicate audited node")
+            _ensure(all(records.get(identity) == value for identity, value in old.items()),
+                    "Audit before-state mismatch")
+            _ensure(all(identity in old or identity not in records for identity in new),
+                    "Audit omitted pre-existing node")
+            _ensure(set(old).issubset(new), "Unexpected audited node deletion")
+            _ensure(event.target_id in new, "Incorrect structural audit target")
+            for identity, value in new.items():
+                _ensure(value.project_id == event.project_id,
+                        "Audit changed node outside project")
+                records[identity] = value
+        else:
+            _ensure(type(event.after) is cls and event.after.id == event.target_id,
+                    "Invalid audit after-state")
+            _ensure(event.before is None or
+                    (type(event.before) is cls and event.before.id == event.target_id),
+                    "Invalid audit before-state")
+            _ensure(records.get(event.target_id) == event.before,
+                    "Audit before-state mismatch")
+            _ensure(event.target_id not in records or event.before is not None,
+                    "Audit duplicate creation")
+            project_id = (
+                event.after.id if attr == "_projects" else
+                event.after.source_project_id if attr == "_dependencies" else
+                event.after.project_id
+            )
+            _ensure(project_id == event.project_id, "Audit writes foreign project")
+            records[event.target_id] = event.after
+    for _, attr, _ in _BUCKETS:
+        _ensure(replay[attr] == getattr(engine, attr),
+                "Audit history does not reconstruct canonical records")
