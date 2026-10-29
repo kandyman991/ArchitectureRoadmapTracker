@@ -7,8 +7,10 @@
 - **Privacy and trust:** test data synthetic; actor strings are unverified, proposals are not approvals. In-memory only; T1.3 persistence/recovery/concurrency, T3 authorization, and T4 acceptance remain unimplemented.
 - **Verification:** code/documentation revision **7744eaa2c7c896ba217088a6a8202a1184eaaa4b** passed mandatory [CI run 40901141881](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40901141881), **48 tests**. This is evidence only for that exact SHA; commits after checkpoint recording require their own check.
 - **Hardening:** immutable UTC proposal timestamps, multiline actor/action rejection to avoid spoofed audit text; proposal rationale/content may remain multiline.
-- Self-review and CI do not count as a separate independent architecture/security/data-integrity review.
-- **Pending:** complete CI, correct findings, obtain separate architecture/security/data-integrity review, reverify latest head CI, and request explicit owner authorization before merge.
+- **Separate-session AI review:** PR review [#5700453288](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4#pullrequestreview-5700453288) reviewed head d425fd7214bbfd712e8152290fd50b13871ca2c7 against architecture/security/data-integrity contracts. This is a distinct ChatGPT conversation, not an external human review or a separate GitHub identity.
+- **Review corrections:** M1 stale requirement node/ADR link edits now require matching expected version; M2 erroneous ADR links can be removed through an audited, version-bumping command; L1 cross-project intent validation now precedes foreign target lookup. New synthetic regressions added.
+- **Fresh verification:** old run 40901283308 was green for d425fd7214bbfd712e8152290fd50b13871ca2c7 only. The **final corrected PR head** requires a new successful architecture-contract run; do not infer clearance from an earlier revision.
+- **Pending:** reverify live CI on the exact corrected final head, inspect merge protection/review conversations, merge only if green under the owner's explicit 2026-10-29 authorization. T1.3 remains a separate milestone.
 
 ## CP-T1.1 — canonical tree accepted
 
