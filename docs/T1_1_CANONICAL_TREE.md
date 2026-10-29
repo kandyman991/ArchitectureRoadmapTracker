@@ -23,7 +23,8 @@
 
 - State is process-local only. Restarting the engine discards data. Do not deploy as a durable multi-user service.
 - No locks or concurrent editors, event log, authentication, permissions or persisted rollback. These need separate milestones, not undocumented shortcuts.
-- Repository bindings are strings, not authenticated GitHub connections.
+- Repository bindings are strings, not authenticated GitHub connections. Core input hygiene rejects control characters, embedded HTTP(S) URL credentials and query/fragment-bearing URLs; this does **not** verify repository identity, user permissions or adapter safety.
+- Acceptance criteria are trimmed and exact duplicate entries after normalization are rejected, avoiding conflicting duplicate obligations in later acceptance projections.
 - Python stdlib is used to exercise invariants, not to approve a future web UI or backend framework/hosting choice.
 - Full-state structural validation and derived child lookup are intentionally simple; large-tree performance must be profiled before production.
 
