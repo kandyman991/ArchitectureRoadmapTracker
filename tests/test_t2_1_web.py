@@ -52,11 +52,11 @@ class WebShellHTTPTests(unittest.TestCase):
         self.assertEqual(status, 200)
         return body
 
-    def command(self, name, revision=None, **fields):
+    def command(self, action, revision=None, **fields):
         if revision is None:
             revision = self.workspace()["revision"]
         return self.request("POST", "/api/commands", {
-            "type": name, "expected_revision": revision, **fields,
+            "type": action, "expected_revision": revision, **fields,
         })[:2]
 
     def test_empty_shell_and_same_origin_static_assets(self):
