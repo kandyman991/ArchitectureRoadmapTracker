@@ -351,7 +351,7 @@ class CommandEngine(GovernanceCommands):
         actor: str | None = None, rationale: str = "",
     ) -> AuditEntry:
         actor = None if actor is None else _text(actor, "actor", limit=300)
-        rationale = _text(rationale, "audit rationale", allow_blank=True)
+        rationale = _text(rationale, "audit rationale", allow_blank=True, multiline=True)
         return AuditEntry(
             sequence=len(self._audit) + 1,
             project_id=project_id, action=action, target_type=target_type,
