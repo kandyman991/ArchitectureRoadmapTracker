@@ -16,14 +16,16 @@
 - T1.1 structural command engine now records before/after events in the same in-memory journal. Unattributed legacy actors remain None and proposal records do **not** assert permission or human approval.
 - Source, tests and design limitations: see docs/T1_2_GOVERNANCE.md and tests/test_governance.py. Traceability: ART-005, ART-011, ART-015 and ART-030 (partial); T1.1 invariants remain applicable.
 - No DB, durable audit, concurrency guarantees, authenticated actor, approval workflow, acceptance evidence, GitHub sync, cloud runner or UI. These are future milestones.
-- This authoring session is **not** an independent architecture/security review. Do not claim T1.2 accepted based on its own tests.
+- A **separate ChatGPT conversation** reviewed the T1.2 architecture, security and data integrity at PR head d425fd7214bbfd712e8152290fd50b13871ca2c7; [review #5700453288](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4#pullrequestreview-5700453288). This is a separate-session AI code review, **not** external human approval or a different authenticated GitHub reviewer.
 
 ## Latest verified T1.2 implementation checkpoint
 
 - Exact implementation SHA **7744eaa2c7c896ba217088a6a8202a1184eaaa4b** passed mandatory [architecture-contract run #40901141881](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40901141881) with **48 tests** on 2026-10-29. The final PR head after any newer documentation or correction commits must be checked separately.
 - Self-review hardening added immutable UTC timestamps to decision/ADR proposals and rejects multiline actor/action fields that could misrepresent an audit log.
+- Separate-session review findings (2026-10-29): **M1** requirement node/ADR link writes lacked expected-version guards; **M2** ADR links could not be removed through a validated command; **L1** target lookup preceded cross-project intent check, revealing foreign ID existence. Corrected with required optimistic versions, immutable audited unlink, and deny-before-lookup plus synthetic regressions.
+- The previous green run 40901283308 applies only to pre-fix head d425fd7214bbfd712e8152290fd50b13871ca2c7. **Fresh required CI must pass the final corrected head** before merge.
 - The authoring workflow and green CI are **not independent technical review**. A separate architecture/security/data-integrity review remains the next gate.
 
 ## Next gate
 
-Inspect live draft PR #4 and final head. Verify required CI at the latest revision; address regression findings. Request separate architecture/security/data-integrity review and fix its findings, rerun final CI. **Never merge without fresh explicit owner authorization.** T1.3 starts in another branch after T1.2 is accepted.
+Verify required architecture-contract CI on the corrected exact final head, confirm main protection and outstanding review threads, then merge only under the owner's explicit 2026-10-29 authorization if every gate is green. Do not represent this separate-session AI review as external human approval. T1.3 begins on a new branch after T1.2 acceptance.
