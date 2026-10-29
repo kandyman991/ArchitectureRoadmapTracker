@@ -1,16 +1,20 @@
 # Curated development checkpoints
 
-## CP-T1.2 — draft domain governance / audit
+## CP-T1.3 — draft projections, storage reference and migration
 
-- **2026-10-29:** [Draft PR #4](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4), branch feature/t1-2-governance-audit, based on main adceec5eabbdad0a52dc95bc2bf11ec3b51dc003. Under development; not merged or accepted.
-- **Scope:** ART-005 typed edges (including cross-project explicit references, cycle prevention and deactivation); ART-011 versioned testable requirement records and many-to-many node links; ART-015 immutable decision and ADR proposals; ART-030 immutable before/after audit journal shared by all existing structural and new domain commands.
-- **Privacy and trust:** test data synthetic; actor strings are unverified, proposals are not approvals. In-memory only; T1.3 persistence/recovery/concurrency, T3 authorization, and T4 acceptance remain unimplemented.
-- **Verification:** code/documentation revision **7744eaa2c7c896ba217088a6a8202a1184eaaa4b** passed mandatory [CI run 40901141881](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40901141881), **48 tests**. This is evidence only for that exact SHA; commits after checkpoint recording require their own check.
-- **Hardening:** immutable UTC proposal timestamps, multiline actor/action rejection to avoid spoofed audit text; proposal rationale/content may remain multiline.
-- **Separate-session AI review:** PR review [#5700453288](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4#pullrequestreview-5700453288) reviewed head d425fd7214bbfd712e8152290fd50b13871ca2c7 against architecture/security/data-integrity contracts. This is a distinct ChatGPT conversation, not an external human review or a separate GitHub identity.
-- **Review corrections:** M1 stale requirement node/ADR link edits now require matching expected version; M2 erroneous ADR links can be removed through an audited, version-bumping command; L1 cross-project intent validation now precedes foreign target lookup. New synthetic regressions added.
-- **Fresh verification:** old run 40901283308 was green for d425fd7214bbfd712e8152290fd50b13871ca2c7 only. The **final corrected PR head** requires a new successful architecture-contract run; do not infer clearance from an earlier revision.
-- **Pending:** reverify live CI on the exact corrected final head, inspect merge protection/review conversations, merge only if green under the owner's explicit 2026-10-29 authorization. T1.3 remains a separate milestone.
+- **2026-10-29:** [Draft PR #5](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/5), branch `feature/t1-3-projections-storage` based on merged T1.2 main `843f9a8bcbbabb509f4fa4b1ebb112fc826a6fe2`. Not accepted or merged.
+- Scope: deterministic read-only canonical tree projections; versioned typed snapshot export/import preserving immutable audit before/after history; strict graph/journal replay validation; SQLite reference persist-before-publish command storage, transactional v1-to-v2 migration, optimistic revision conflict rejection, and synthetic regressions.
+- **Proposed ADR-0009:** evaluate SQLite versus atomic JSON and PostgreSQL. SQLite is a reversible reference adapter only; no final production datastore selection or change to `DECISIONS.md` is approved.
+- Limits: no authenticated identity, project permission gate, hosted multi-user storage, signed audit, production backup/restore, acceptance/evidence engine, UI or cloud jobs. Per-instance concurrent command evaluation remains out of scope; separate process writers use SQLite CAS.
+- **Verification:** first implementation CI may precede later code/docs commits. Inspect live required run on the **exact final PR head**; never promote a prior run to final verification.
+- **Next:** independent architecture/security/data-integrity review and ADR decision, fix all findings, rerun final-head CI, and request explicit owner authorization before merge. Self-review is not independent.
+
+## CP-T1.2 — merged and reviewed governance / audit
+
+- [PR #4](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4) merged with explicit owner authorization as `843f9a8bcbbabb509f4fa4b1ebb112fc826a6fe2` on 2026-10-29.
+- Final head `ae61fac8977257017ee4449f0f04a2e3f66e34a3` passed required [architecture-contract CI #40903141414](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40903141414), **50 tests**.
+- [Separate-session ChatGPT review #5700453288](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4#pullrequestreview-5700453288) found and corrected (M1) stale link writes, (M2) missing ADR unlink and (L1) cross-project target existence disclosure. Review is not an independent human or distinct GitHub approval.
+- Implemented in-memory versioned requirements, typed directed dependencies, immutable proposals and shared audit journal. Durable storage/auth/acceptance remain deferred to later milestones.
 
 ## CP-T1.1 — canonical tree accepted
 
