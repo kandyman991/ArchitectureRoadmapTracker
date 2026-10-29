@@ -18,6 +18,12 @@
 - No DB, durable audit, concurrency guarantees, authenticated actor, approval workflow, acceptance evidence, GitHub sync, cloud runner or UI. These are future milestones.
 - This authoring session is **not** an independent architecture/security review. Do not claim T1.2 accepted based on its own tests.
 
+## Latest verified T1.2 implementation checkpoint
+
+- Exact implementation SHA **7744eaa2c7c896ba217088a6a8202a1184eaaa4b** passed mandatory [architecture-contract run #40901141881](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40901141881) with **48 tests** on 2026-10-29. The final PR head after any newer documentation or correction commits must be checked separately.
+- Self-review hardening added immutable UTC timestamps to decision/ADR proposals and rejects multiline actor/action fields that could misrepresent an audit log.
+- The authoring workflow and green CI are **not independent technical review**. A separate architecture/security/data-integrity review remains the next gate.
+
 ## Next gate
 
 Inspect live draft PR #4 and final head. Verify required CI at the latest revision; address regression findings. Request separate architecture/security/data-integrity review and fix its findings, rerun final CI. **Never merge without fresh explicit owner authorization.** T1.3 starts in another branch after T1.2 is accepted.
