@@ -216,6 +216,36 @@ class CanonicalTreeTests(unittest.TestCase):
         self.assertEqual(second.id, "b" * 32)
         self.assertEqual(self.labels(), ["A", "B"])
 
+    def test_normalized_duplicate_criteria_fail_atomically(self):
+        before = tuple(self.engine.walk(self.project.id))
+        with self.assertRaises(TreeError):
+            self.engine.create_node(
+                self.project.id, "Invalid",
+                acceptance_criteria=("Check builds", "  Check builds  "),
+            )
+        self.assertEqual(tuple(self.engine.walk(self.project.id)), before)
+
+    def test_repository_binding_rejects_unsafe_values_atomically(self):
+        before = self.engine.projects()
+        unsafe = (
+            "org/repo\\nforged",
+            "org/repo\\x7f",
+            "https://user:secret@github.com/org/repo",
+            "https://github.com/org/repo?access_token=secret",
+        )
+        for binding in unsafe:
+            with self.subTest(binding=binding):
+                with self.assertRaises(TreeError):
+                    self.engine.create_project("Rejected", (binding,))
+                self.assertEqual(self.engine.projects(), before)
+        valid = self.engine.create_project(
+            "Safe", ("  https://github.com/org/repo  ", "git@github.com:org/other")
+        )
+        self.assertEqual(
+            valid.repositories,
+            ("https://github.com/org/repo", "git@github.com:org/other"),
+        )
+
     def test_project_rename_preserves_id_and_bindings(self):
         project = self.engine.create_project(" New ", ("company/repo",))
         renamed = self.engine.rename_project(project.id, "Revised")
