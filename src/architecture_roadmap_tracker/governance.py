@@ -187,7 +187,7 @@ class GovernanceCommands:
             return prior
         revised = replace(prior, title=title, criteria=criteria, version=prior.version + 1)
         event = self._event(project_id, "requirement.revise", "requirement", prior.id, prior,
-                            revised, actor=actor, rationale=_text(rationale, "revision rationale"))
+                            revised, actor=actor, rationale=_text(rationale, "revision rationale", multiline=True))
         self._publish("_requirements", {**self._requirements, prior.id: revised}, event)
         return revised
 
@@ -310,7 +310,7 @@ class GovernanceCommands:
             return old
         changed = replace(old, active=False)
         event = self._event(project_id, "dependency.deactivate", "dependency", old.id,
-                            old, changed, actor=actor, rationale=_text(rationale, "deactivation rationale"))
+                            old, changed, actor=actor, rationale=_text(rationale, "deactivation rationale", multiline=True))
         self._publish("_dependencies", {**self._dependencies, old.id: changed}, event)
         return changed
 
@@ -368,8 +368,8 @@ class GovernanceCommands:
         actor = _text(actor, "actor", limit=300)
         action = _text(action, "action", limit=300)
         rationale = _text(rationale, "decision rationale", multiline=True)
-        previous_value = _text(previous_value, "previous value", allow_blank=True)
-        proposed_value = _text(proposed_value, "proposed value")
+        previous_value = _text(previous_value, "previous value", allow_blank=True, multiline=True)
+        proposed_value = _text(proposed_value, "proposed value", multiline=True)
         item = DecisionProposal(self._allocate_id(), project_id, node_id, actor, action,
                                 rationale, previous_value, proposed_value,
                                 datetime.now(timezone.utc))
