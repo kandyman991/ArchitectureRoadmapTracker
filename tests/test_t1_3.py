@@ -129,6 +129,41 @@ class SnapshotTests(unittest.TestCase):
                 import_snapshot(data)
         self.assertEqual(export_snapshot(e), original)
 
+    def test_import_rejects_cyclic_adr_supersession(self):
+        engine = CommandEngine()
+        project = engine.create_project("ADR history")
+        first = engine.propose_architecture_decision(
+            project.id, "ADR-0101", "First", "Synthetic", actor="synthetic:tester")
+        second = engine.propose_architecture_decision(
+            project.id, "ADR-0102", "Second", "Synthetic",
+            supersedes_id=first.id, actor="synthetic:tester")
+        altered = json.loads(export_snapshot(engine))
+        for record in altered["architecture_decisions"]:
+            if record["fields"]["id"] == first.id:
+                record["fields"]["supersedes_id"] = second.id
+        for event in altered["audit"]:
+            if event["fields"]["target_id"] == first.id:
+                event["fields"]["after"]["fields"]["supersedes_id"] = second.id
+        with self.assertRaisesRegex(TreeError, "supersession cycle"):
+            import_snapshot(json.dumps(altered).encode())
+
+    def test_import_rejects_audited_node_project_transfer(self):
+        engine = CommandEngine()
+        first = engine.create_project("First")
+        second = engine.create_project("Second")
+        node = engine.create_node(first.id, "Before")
+        engine.rename_node(first.id, node.id, "After")
+        altered = json.loads(export_snapshot(engine))
+        for record in altered["nodes"]:
+            if record["fields"]["id"] == node.id:
+                record["fields"]["project_id"] = second.id
+        last = altered["audit"][-1]["fields"]
+        last["project_id"] = second.id
+        for record in last["after"]["$tuple"]:
+            record["fields"]["project_id"] = second.id
+        with self.assertRaisesRegex(TreeError, "outside project"):
+            import_snapshot(json.dumps(altered).encode())
+
     def test_deep_tree_roundtrip_without_recursive_hierarchy_serialization(self):
         e = CommandEngine()
         p = e.create_project("Deep")
@@ -193,6 +228,21 @@ class SQLitePersistenceTests(unittest.TestCase):
         self.assertEqual(e.storage_revision, revision)
         self.assertEqual(PersistentCommandEngine(self.path).project(project.id).name, "Original")
 
+    def test_existing_writer_refuses_to_hide_disk_corruption(self):
+        engine = PersistentCommandEngine(self.path)
+        project = engine.create_project("Before", actor="synthetic:tester")
+        previous_audit = engine.audit_log(project.id)
+        revision = engine.storage_revision
+        with sqlite3.connect(self.path) as con:
+            con.execute("UPDATE snapshots SET payload=?", (b"tampered",))
+        with self.assertRaisesRegex(TreeError, "corrupt"):
+            engine.rename_project(project.id, "Must not commit")
+        self.assertEqual(engine.project(project.id).name, "Before")
+        self.assertEqual(engine.audit_log(project.id), previous_audit)
+        self.assertEqual(engine.storage_revision, revision)
+        with sqlite3.connect(self.path) as con:
+            self.assertEqual(con.execute("SELECT payload FROM snapshots").fetchone()[0], b"tampered")
+
     def test_detects_corruption_and_rejects_unknown_schema_without_replay(self):
         e = PersistentCommandEngine(self.path)
         e.create_project("Untampered", actor="synthetic:tester")
@@ -225,6 +275,24 @@ class SQLitePersistenceTests(unittest.TestCase):
         migrated.rename_project(project.id, "After migration", actor="synthetic:tester")
         self.assertEqual(PersistentCommandEngine(self.path).project(project.id).name,
                          "After migration")
+
+    def test_invalid_v1_snapshot_rolls_back_migration(self):
+        engine = CommandEngine()
+        engine.create_project("Original", actor="synthetic:tester")
+        altered = json.loads(export_snapshot(engine))
+        altered["projects"][0]["fields"]["name"] = "Unaudited mutation"
+        corrupt = json.dumps(altered).encode()
+        with sqlite3.connect(self.path) as con:
+            con.execute("CREATE TABLE snapshots (id INTEGER PRIMARY KEY CHECK(id=1), payload BLOB NOT NULL)")
+            con.execute("INSERT INTO snapshots (id, payload) VALUES (1, ?)", (corrupt,))
+            con.execute("PRAGMA user_version=1")
+        with self.assertRaises(TreeError):
+            PersistentCommandEngine(self.path)
+        with sqlite3.connect(self.path) as con:
+            self.assertEqual(con.execute("PRAGMA user_version").fetchone()[0], 1)
+            cols = [item[1] for item in con.execute("PRAGMA table_info(snapshots)")]
+            self.assertEqual(cols, ["id", "payload"])
+            self.assertEqual(con.execute("SELECT payload FROM snapshots").fetchone()[0], corrupt)
 
     def test_new_database_is_migrated_to_v2(self):
         e = PersistentCommandEngine(self.path)
