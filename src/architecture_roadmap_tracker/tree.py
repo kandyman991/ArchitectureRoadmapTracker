@@ -6,22 +6,13 @@ Mutations publish only after all structural invariants pass.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Iterator
+from .errors import InvalidMove, NotFound, TreeError
+from .governance import AuditEntry, GovernanceCommands, _text
 from urllib.parse import urlsplit
 from uuid import uuid4
-
-
-class TreeError(ValueError):
-    """Rejected command. The canonical tree remains unchanged."""
-
-
-class NotFound(TreeError):
-    """Project or project-scoped node does not exist."""
-
-
-class InvalidMove(TreeError):
-    """Invalid reparenting, cycle or archived-node operation."""
 
 
 class NodeKind(str, Enum):
@@ -89,7 +80,7 @@ def _position(position: int | None, count: int) -> int:
     return position
 
 
-class CommandEngine:
+class CommandEngine(GovernanceCommands):
     """Only in-memory mutation surface for canonical projects/nodes.
 
     Frozen models prevent accidental mutation outside commands. Moves operate
@@ -100,11 +91,20 @@ class CommandEngine:
     def __init__(self) -> None:
         self._projects: dict[str, Project] = {}
         self._nodes: dict[str, RoadmapNode] = {}
+        self._requirements = {}
+        self._dependencies = {}
+        self._architecture_decisions = {}
+        self._decision_proposals = {}
+        self._audit: tuple[AuditEntry, ...] = ()
 
     def _allocate_id(self) -> str:
         for _ in range(10):
             candidate = uuid4().hex
-            if candidate not in self._projects and candidate not in self._nodes:
+            if all(candidate not in records for records in (
+                self._projects, self._nodes, self._requirements,
+                self._dependencies, self._architecture_decisions,
+                self._decision_proposals,
+            )):
                 return candidate
         raise TreeError("Unable to allocate unique identity")
 
@@ -117,7 +117,10 @@ class CommandEngine:
     def projects(self) -> tuple[Project, ...]:
         return tuple(self._projects.values())
 
-    def create_project(self, name: str, repositories: tuple[str, ...] = ()) -> Project:
+    def create_project(
+        self, name: str, repositories: tuple[str, ...] = (), *,
+        actor: str | None = None, rationale: str = "",
+    ) -> Project:
         name = _title(name)
         if not isinstance(repositories, tuple):
             raise TreeError("Repository bindings must be a tuple")
@@ -125,13 +128,21 @@ class CommandEngine:
         if len(normalized) != len(set(normalized)):
             raise TreeError("Duplicate repository binding")
         project = Project(self._allocate_id(), name, normalized)
-        self._projects = {**self._projects, project.id: project}
+        event = self._event(project.id, "project.create", "project", project.id,
+                            None, project, actor=actor, rationale=rationale)
+        self._publish("_projects", {**self._projects, project.id: project}, event)
         return project
 
-    def rename_project(self, project_id: str, name: str) -> Project:
+    def rename_project(
+        self, project_id: str, name: str, *, actor: str | None = None, rationale: str = "",
+    ) -> Project:
         current = self.project(project_id)
         renamed = replace(current, name=_title(name))
-        self._projects = {**self._projects, current.id: renamed}
+        if renamed == current:
+            return current
+        event = self._event(project_id, "project.rename", "project", current.id,
+                            current, renamed, actor=actor, rationale=rationale)
+        self._publish("_projects", {**self._projects, current.id: renamed}, event)
         return renamed
 
     def node(self, project_id: str, node_id: str) -> RoadmapNode:
@@ -182,6 +193,7 @@ class CommandEngine:
         kind: NodeKind = NodeKind.TASK,
         description: str = "",
         acceptance_criteria: tuple[str, ...] = (),
+        actor: str | None = None, rationale: str = "",
     ) -> RoadmapNode:
         self.project(project_id)
         title = _title(title)
@@ -212,23 +224,29 @@ class CommandEngine:
         proposed[node.id] = node
         siblings.insert(index, node.id)
         self._renumber(proposed, siblings)
-        self._commit(proposed)
+        self._commit(proposed, project_id=project_id, action="node.create",
+                     target_id=node.id, actor=actor, rationale=rationale)
         return self._nodes[node.id]
 
-    def rename_node(self, project_id: str, node_id: str, title: str) -> RoadmapNode:
+    def rename_node(
+        self, project_id: str, node_id: str, title: str, *,
+        actor: str | None = None, rationale: str = "",
+    ) -> RoadmapNode:
         original = self.node(project_id, node_id)
         title = _title(title)
         if self._is_effectively_archived(node_id):
             raise TreeError("Cannot edit archived node")
         proposed = self._nodes.copy()
         proposed[node_id] = replace(original, title=title)
-        self._commit(proposed)
+        self._commit(proposed, project_id=project_id, action="node.rename",
+                     target_id=node_id, actor=actor, rationale=rationale)
         return self._nodes[node_id]
 
     def move_node(
         self, project_id: str, node_id: str, *,
         new_parent_id: str | None,
         position: int | None = None,
+        actor: str | None = None, rationale: str = "",
     ) -> RoadmapNode:
         original = self.node(project_id, node_id)
         if self._is_effectively_archived(node_id):
@@ -256,16 +274,26 @@ class CommandEngine:
         if original.parent_id != new_parent_id:
             self._renumber(proposed, old_order)
         self._renumber(proposed, new_order)
-        self._commit(proposed)
+        self._commit(proposed, project_id=project_id, action="node.move",
+                     target_id=node_id, actor=actor, rationale=rationale)
         return self._nodes[node_id]
 
-    def archive_node(self, project_id: str, node_id: str) -> RoadmapNode:
-        return self._set_archive(project_id, node_id, True)
+    def archive_node(
+        self, project_id: str, node_id: str, *,
+        actor: str | None = None, rationale: str = "",
+    ) -> RoadmapNode:
+        return self._set_archive(project_id, node_id, True, actor=actor, rationale=rationale)
 
-    def restore_node(self, project_id: str, node_id: str) -> RoadmapNode:
-        return self._set_archive(project_id, node_id, False)
+    def restore_node(
+        self, project_id: str, node_id: str, *,
+        actor: str | None = None, rationale: str = "",
+    ) -> RoadmapNode:
+        return self._set_archive(project_id, node_id, False, actor=actor, rationale=rationale)
 
-    def _set_archive(self, project_id: str, node_id: str, archived: bool) -> RoadmapNode:
+    def _set_archive(
+        self, project_id: str, node_id: str, archived: bool, *,
+        actor: str | None, rationale: str,
+    ) -> RoadmapNode:
         original = self.node(project_id, node_id)
         if not archived and original.parent_id is not None and self._is_effectively_archived(original.parent_id):
             raise TreeError("Restore archived ancestor first")
@@ -273,7 +301,9 @@ class CommandEngine:
             return original
         proposed = self._nodes.copy()
         proposed[node_id] = replace(original, archived=archived)
-        self._commit(proposed)
+        self._commit(proposed, project_id=project_id,
+                     action="node.archive" if archived else "node.restore",
+                     target_id=node_id, actor=actor, rationale=rationale)
         return self._nodes[node_id]
 
     def children(
@@ -310,9 +340,51 @@ class CommandEngine:
 
         return traverse()
 
-    def _commit(self, proposed: dict[str, RoadmapNode]) -> None:
+    def audit_log(self, project_id: str) -> tuple[AuditEntry, ...]:
+        """Immutable, project-scoped journal snapshot; no public mutation API."""
+        self.project(project_id)
+        return tuple(item for item in self._audit if item.project_id == project_id)
+
+    def _event(
+        self, project_id: str, action: str, target_type: str, target_id: str,
+        before: object | None, after: object | None, *,
+        actor: str | None = None, rationale: str = "",
+    ) -> AuditEntry:
+        actor = None if actor is None else _text(actor, "actor", limit=300)
+        rationale = _text(rationale, "audit rationale", allow_blank=True)
+        return AuditEntry(
+            sequence=len(self._audit) + 1,
+            project_id=project_id, action=action, target_type=target_type,
+            target_id=target_id, occurred_at=datetime.now(timezone.utc),
+            actor=actor, rationale=rationale, before=before, after=after,
+        )
+
+    def _publish(self, bucket: str, proposed: dict, event: AuditEntry) -> None:
+        """Publish validated candidate and append audit only after validation.
+
+        No disk-backed transaction or concurrent readers/writers in T1.2.
+        """
+        new_log = (*self._audit, event)
+        setattr(self, bucket, proposed)
+        self._audit = new_log
+
+    def _commit(
+        self, proposed: dict[str, RoadmapNode], *,
+        project_id: str, action: str, target_id: str,
+        actor: str | None = None, rationale: str = "",
+    ) -> None:
         self._validate(proposed)
-        self._nodes = proposed
+        changed = sorted(
+            node_id for node_id in (self._nodes.keys() | proposed.keys())
+            if self._nodes.get(node_id) != proposed.get(node_id)
+        )
+        if not changed:
+            return
+        previous = tuple(self._nodes[node_id] for node_id in changed if node_id in self._nodes)
+        updated = tuple(proposed[node_id] for node_id in changed if node_id in proposed)
+        event = self._event(project_id, action, "node", target_id, previous, updated,
+                            actor=actor, rationale=rationale)
+        self._publish("_nodes", proposed, event)
 
     def _validate(self, nodes: dict[str, RoadmapNode]) -> None:
         groups: dict[tuple[str, str | None], list[int]] = {}
