@@ -110,6 +110,11 @@ class WebShellHTTPTests(unittest.TestCase):
         )
         status, _ = self.command("node.archive", project_id=pid, node_id=first["id"])
         self.assertEqual(status, 200)
+        after_archive = self.workspace()["outlines"][pid]
+        self.assertTrue(next(n for n in after_archive if n["id"] == first["id"])["effectively_archived"])
+        inherited = next(n for n in after_archive if n["id"] == second["id"])
+        self.assertFalse(inherited["archived"])
+        self.assertTrue(inherited["effectively_archived"])
         status, _ = self.command(
             "node.rename", project_id=pid, node_id=second["id"], title="Forbidden",
         )
