@@ -8,11 +8,14 @@ T1.1. This is a reviewable prototype, not durable multi-user governance.
 - Requirements are stable-ID, project-owned records with an independent unique
   code, nonempty testable criteria, monotonic version and direct links to any
   number of same-project roadmap nodes and proposed architecture decisions.
-  Expected-version checks reject stale requirement revisions; link/unlink
-  changes also increment the version.
+  Expected-version checks reject stale revisions and every node/ADR
+  link/unlink command, including stale apparent no-ops. Every change increments
+  the requirement version; mistaken ADR links can be unlinked through the
+  same audited command engine without rewriting the immutable proposal.
 - Dependencies are typed directed edges; for BLOCKS, **source depends on
   target**. Edges may target another project only when explicitly requested;
-  target project/node existence is checked, and blocking cycles are rejected
+  target project/node existence is checked only after cross-project opt-in,
+  and blocking cycles are rejected
   across the whole in-memory graph using iterative reachability. RELATES_TO
   is nonblocking. Deactivation retains history and allows a new edge.
 - Architecture decisions are immutable ADR **proposals** with unique
@@ -31,7 +34,8 @@ T1.1. This is a reviewable prototype, not durable multi-user governance.
 
 - No second roadmap tree, no disconnected mutation controller, no implicit
   status/acceptance from linked requirements, proposals, or dependency edges.
-- Reject duplicate requirement codes/criteria, duplicate active typed edges,
+- Reject stale versions for *all* requirement changes (including link/unlink),
+  duplicate requirement codes/criteria, duplicate active typed edges,
   self/indirect blocking cycles, unknown/foreign node references, archived
   targets for new links, invalid action input and revision conflicts.
 - A failed command does not mutate the canonical records or append audit.
