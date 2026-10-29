@@ -5,7 +5,9 @@
 - **2026-10-29:** [Draft PR #4](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4), branch feature/t1-2-governance-audit, based on main adceec5eabbdad0a52dc95bc2bf11ec3b51dc003. Under development; not merged or accepted.
 - **Scope:** ART-005 typed edges (including cross-project explicit references, cycle prevention and deactivation); ART-011 versioned testable requirement records and many-to-many node links; ART-015 immutable decision and ADR proposals; ART-030 immutable before/after audit journal shared by all existing structural and new domain commands.
 - **Privacy and trust:** test data synthetic; actor strings are unverified, proposals are not approvals. In-memory only; T1.3 persistence/recovery/concurrency, T3 authorization, and T4 acceptance remain unimplemented.
-- **Verification:** new tests in tests/test_governance.py; exact final-head workflow results must be inspected live. No self-review is an independent technical review.
+- **Verification:** code/documentation revision **7744eaa2c7c896ba217088a6a8202a1184eaaa4b** passed mandatory [CI run 40901141881](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40901141881), **48 tests**. This is evidence only for that exact SHA; commits after checkpoint recording require their own check.
+- **Hardening:** immutable UTC proposal timestamps, multiline actor/action rejection to avoid spoofed audit text; proposal rationale/content may remain multiline.
+- Self-review and CI do not count as a separate independent architecture/security/data-integrity review.
 - **Pending:** complete CI, correct findings, obtain separate architecture/security/data-integrity review, reverify latest head CI, and request explicit owner authorization before merge.
 
 ## CP-T1.1 — canonical tree accepted
