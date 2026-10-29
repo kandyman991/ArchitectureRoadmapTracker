@@ -1,21 +1,23 @@
 # Architecture Roadmap Tracker — curated handoff
 
-**Current development:** T1.1 canonical project/node tree in [draft PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3). Unmerged.
+**Current:** T1.1 canonical project/node tree, [draft PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3), unmerged and not yet accepted.
 
-## Verified origin
+## Verified baseline
 
-- T0 PR #1 merged into main at SHA 5eecd748a32a106bb9bcdff3b695a5d169fa256d, with post-merge check [run 40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255) successful.
-- Before T1.1 began, main had no open PRs or issues; source and contracts were checked against live GitHub.
-- Main ruleset [26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) remains the required PR/check policy; verify its live state each session.
+- T0 [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) merged into main SHA 5eecd748a32a106bb9bcdff3b695a5d169fa256d.
+- [Post-merge main CI #40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255): success.
+- Ruleset [26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238): previously verified active; check live current state before merging.
+- Before T1.1: no other open PRs/issues.
 
-## Current scoped work
+## T1.1 implementation evidence
 
-- Branch: feature/t1-1-canonical-tree, based on the main SHA above.
-- Pure Python structural command engine with frozen project/nodes, arbitrary-depth ordered hierarchy, stable IDs and cycle/cross-project/archived-parent safeguards.
-- Deep-tree, wide-sibling and mutation rejection regressions; see [T1.1 design](docs/T1_1_CANONICAL_TREE.md).
-- **No application UI, persistence, audit, GitHub sync, acceptance, cloud jobs or ChatGPT plugin.**
-- PR #3 is draft; inspect the latest head and exact-head CI before claiming completion.
+- Branch: feature/t1-1-canonical-tree; based on main SHA above.
+- Exact implementation commit **46e7183bc086a741dd1d372716cf4a1cf11c7e6f** passed required [GitHub CI run #40890002136](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40890002136), 29 tests, 2026-10-29.
+- Any subsequent documentation commit changes the PR head and MUST be verified independently before claiming exact-head CI.
+- Scope: in-memory immutable project/node models, stable IDs, unlimited-depth ordered parent tree, atomic structural commands, cycle/project isolation, archive safety, snapshot reads, synthetic regressions.
+- **Not implemented:** durable storage, requirements/dependencies/audit, UI, GitHub sync, milestone acceptance, cloud jobs, ChatGPT tools.
+- No separate independent technical review has been obtained; a same-author review must not be represented as independent.
 
-## Next step
+## Next action
 
-Review PR #3 code, inspect GitHub CI, correct findings and record actual review provenance. Do not merge or begin T1.2 without the owner's explicit authorization.
+Inspect live PR #3 final head/CI, perform independent architecture/data-integrity review, fix findings, and seek explicit owner approval before merge. T1.2 must begin only on a new scoped branch after T1.1 acceptance.
