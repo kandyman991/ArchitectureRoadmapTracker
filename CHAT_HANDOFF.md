@@ -1,27 +1,31 @@
 # Architecture Roadmap Tracker — curated handoff
 
-**Checkpoint:** CP-T0-BOOTSTRAP — PR #1 governance baseline under review, 2026-10-29.
+**Current:** T1.1 canonical project/node tree, [draft PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3), unmerged and not yet accepted.
 
-## Product intent
+## Verified baseline
 
-Tree-first, unlimited-depth, multi-project development orchestrator. Each roadmap node links PRs, reviews, jobs, findings, decisions and dependencies. The Inspector holds decisions; Job Center manages cloud execution; ChatGPT uses authorized tools. A merged PR never automatically completes a milestone.
+- T0 [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) merged into main SHA 5eecd748a32a106bb9bcdff3b695a5d169fa256d.
+- [Post-merge main CI #40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255): success.
+- Ruleset [26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238): previously verified active; check live current state before merging.
+- Before T1.1: no other open PRs/issues.
 
-## Verified initial and review context
+## T1.1 implementation evidence
 
-- Public repository: `kandyman991/ArchitectureRoadmapTracker`; default branch `main`.
-- Initial main base: `a59759de5af1bb19c8a3a2fe16560b695ad2a98a`.
-- Draft [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) proposes the T0 documents and checks. Historical head `3145a723d223920998bc2aa546c22fb4b1d9afd3` passed [run 40881560366](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40881560366). **That run is not evidence for later commits. Verify live final PR head and checks.**
-- On 2026-10-29, [ruleset 26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) was active on `main`: PR and up-to-date `architecture-contract` check required, no bypass actors, force push and deletion blocked, conversations resolved, zero mandatory GitHub approvals (solo maintainer).
-- Review found policy versus ruleset mismatch, stale handoff and insufficient contract-validation tests. Corrections proposed in this PR. The review was performed in the same assistant workflow as authoring; **do not describe it as an independent external review.**
-- No application code, interactive roadmap, real job runner or ChatGPT integration exists.
+- Branch: feature/t1-1-canonical-tree; based on main SHA above.
+- Exact implementation commit **46e7183bc086a741dd1d372716cf4a1cf11c7e6f** passed required [GitHub CI run #40890002136](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40890002136), 29 tests, 2026-10-29.
+- Any subsequent documentation commit changes the PR head and MUST be verified independently before claiming exact-head CI.
+- Scope: in-memory immutable project/node models, stable IDs, unlimited-depth ordered parent tree, atomic structural commands, cycle/project isolation, archive safety, snapshot reads, synthetic regressions.
+- **Not implemented:** durable storage, requirements/dependencies/audit, UI, GitHub sync, milestone acceptance, cloud jobs, ChatGPT tools.
+- No separate independent technical review has been obtained; a same-author review must not be represented as independent.
 
-## T0 acceptance still needs
+## Separate T1.1 architecture/security/data-integrity review (2026-10-29)
 
-1. Verify final PR #1 head and required CI results after the review corrections.
-2. Record review findings/resolutions and any independent review limitation.
-3. Merge only under explicit owner authorization (owner explicitly requested review, corrections and merge in the 2026-10-29 conversation).
-4. After verified merge, close [issue #2](https://github.com/kandyman991/ArchitectureRoadmapTracker/issues/2).
+- A separate ChatGPT review session inspected PR #3 code and synthetic tests against AGENTS.md, ARCHITECTURE.md, REQUIREMENTS.md, ROADMAP.md and DECISIONS.md. This is **not an independent human/external reviewer or a GitHub approval from a distinct identity**.
+- F1 (data integrity): acceptance criteria were normalized without rejecting duplicates. Now rejected atomically; regression added.
+- F2 (security/input hygiene): opaque repository bindings accepted embedded control characters and credential-bearing or query-string URLs. Now rejected before publishing project records; regression added. This is not a substitute for T3 identity, authentication and authorization checks.
+- Corrections and review evidence are in draft PR #3. **Verify the actual final PR SHA and fresh required CI after these documentation updates; do not infer success from the earlier green runs.**
+- No external execution, storage, permissions or concurrency was added; T1.2/T1.3/T3 retain those obligations. PR remains unmerged pending owner authorization.
 
-## Next scoped milestone
+## Next action
 
-T1.1 — canonical project/node model, stable IDs, arbitrary ordered tree and cycle-safe atomic commands, in a **separate** PR. No claim that T1 work is started.
+Inspect live PR #3 final head/CI, perform independent architecture/data-integrity review, fix findings, and seek explicit owner approval before merge. T1.2 must begin only on a new scoped branch after T1.1 acceptance.
