@@ -82,17 +82,17 @@ class GovernanceTests(unittest.TestCase):
     def test_node_links_are_derived_without_duplicate_authority(self):
         item = self.make_requirement()
         linked = self.e.link_requirement_node(
-            self.p.id, item.id, self.b.id, actor="synthetic:tester",
+            self.p.id, item.id, self.b.id, expected_version=1, actor="synthetic:tester",
         )
         self.assertEqual(linked.version, 2)
         self.assertEqual(linked.node_ids, (self.a.id, self.b.id))
         log = self.e.audit_log(self.p.id)
         self.e.link_requirement_node(
-            self.p.id, item.id, self.b.id, actor="synthetic:tester",
+            self.p.id, item.id, self.b.id, expected_version=2, actor="synthetic:tester",
         )
         self.assertEqual(self.e.audit_log(self.p.id), log)
         unlinked = self.e.unlink_requirement_node(
-            self.p.id, item.id, self.a.id, actor="synthetic:tester",
+            self.p.id, item.id, self.a.id, expected_version=2, actor="synthetic:tester",
         )
         self.assertEqual(unlinked.node_ids, (self.b.id,))
         self.assertEqual(self.e.requirements(self.p.id, self.a.id), ())
@@ -100,7 +100,7 @@ class GovernanceTests(unittest.TestCase):
         self.e.archive_node(self.p.id, self.c.id)
         with self.assertRaises(TreeError):
             self.e.link_requirement_node(
-                self.p.id, item.id, self.c.id, actor="synthetic:tester",
+                self.p.id, item.id, self.c.id, expected_version=3, actor="synthetic:tester",
             )
 
     def test_cross_project_requirement_link_is_denied(self):
@@ -110,7 +110,7 @@ class GovernanceTests(unittest.TestCase):
         before = self.e.audit_log(self.p.id)
         with self.assertRaises(NotFound):
             self.e.link_requirement_node(
-                self.p.id, item.id, alien.id, actor="synthetic:tester",
+                self.p.id, item.id, alien.id, expected_version=1, actor="synthetic:tester",
             )
         self.assertEqual(self.e.audit_log(self.p.id), before)
 
@@ -142,6 +142,11 @@ class GovernanceTests(unittest.TestCase):
         with self.assertRaises(TreeError):
             self.e.add_dependency(
                 self.p.id, self.a.id, foreign.id,
+                target_project_id=foreign_project.id, actor="synthetic:tester",
+            )
+        with self.assertRaisesRegex(TreeError, "Explicit cross-project reference required"):
+            self.e.add_dependency(
+                self.p.id, self.a.id, "foreign-node-not-present",
                 target_project_id=foreign_project.id, actor="synthetic:tester",
             )
         self.e.add_dependency(
@@ -210,7 +215,7 @@ class GovernanceTests(unittest.TestCase):
             proposal.state = "approved"
         requirement = self.make_requirement()
         linked = self.e.link_requirement_decision(
-            self.p.id, requirement.id, proposal.id, actor="synthetic:tester",
+            self.p.id, requirement.id, proposal.id, expected_version=1, actor="synthetic:tester",
         )
         self.assertEqual(linked.decision_ids, (proposal.id,))
         with self.assertRaises(TreeError):
@@ -332,6 +337,84 @@ class GovernanceTests(unittest.TestCase):
         with self.assertRaises(dataclasses.FrozenInstanceError):
             adr.created_at = proposal.created_at
 
+
+    def test_stale_requirement_relationship_edits_are_rejected_atomically(self):
+        item = self.make_requirement()
+        updated = self.e.link_requirement_node(
+            self.p.id, item.id, self.b.id, expected_version=1,
+            actor="synthetic:tester",
+        )
+        proposal = self.e.propose_architecture_decision(
+            self.p.id, "ADR-0090", "Alternative", "Synthetic choice",
+            actor="synthetic:author",
+        )
+        before = self.e.audit_log(self.p.id)
+        for action in (
+            lambda: self.e.link_requirement_node(
+                self.p.id, item.id, self.c.id, expected_version=1,
+                actor="synthetic:tester",
+            ),
+            lambda: self.e.unlink_requirement_node(
+                self.p.id, item.id, self.a.id, expected_version=1,
+                actor="synthetic:tester",
+            ),
+            lambda: self.e.link_requirement_decision(
+                self.p.id, item.id, proposal.id, expected_version=1,
+                actor="synthetic:tester",
+            ),
+            lambda: self.e.link_requirement_node(
+                self.p.id, item.id, self.b.id, expected_version=True,
+                actor="synthetic:tester",
+            ),
+        ):
+            with self.assertRaisesRegex(TreeError, "Requirement version conflict"):
+                action()
+            self.assertEqual(self.e.requirement(self.p.id, item.id), updated)
+            self.assertEqual(self.e.audit_log(self.p.id), before)
+        # Matching-version no-op remains idempotent without false audit entries.
+        self.assertEqual(
+            self.e.link_requirement_node(
+                self.p.id, item.id, self.b.id, expected_version=2,
+                actor="synthetic:tester",
+            ), updated,
+        )
+        self.assertEqual(self.e.audit_log(self.p.id), before)
+
+    def test_adr_link_can_be_corrected_without_rewriting_history(self):
+        item = self.make_requirement()
+        proposal = self.e.propose_architecture_decision(
+            self.p.id, "ADR-0091", "Reconsider", "A proposal, not approval",
+            actor="synthetic:author",
+        )
+        linked = self.e.link_requirement_decision(
+            self.p.id, item.id, proposal.id, expected_version=1,
+            actor="synthetic:tester",
+        )
+        count = len(self.e.audit_log(self.p.id))
+        corrected = self.e.unlink_requirement_decision(
+            self.p.id, item.id, proposal.id, expected_version=2,
+            actor="synthetic:tester", rationale="Erroneous relationship",
+        )
+        self.assertEqual(corrected.version, 3)
+        self.assertEqual(corrected.decision_ids, ())
+        self.assertEqual(linked.decision_ids, (proposal.id,))
+        self.assertEqual(self.e.architecture_decision(self.p.id, proposal.id), proposal)
+        event = self.e.audit_log(self.p.id)[-1]
+        self.assertEqual(len(self.e.audit_log(self.p.id)), count + 1)
+        self.assertEqual(event.action, "requirement.unlink_decision")
+        self.assertEqual(event.before, linked)
+        self.assertEqual(event.after, corrected)
+        self.assertEqual(event.rationale, "Erroneous relationship")
+        self.e.unlink_requirement_decision(
+            self.p.id, item.id, proposal.id, expected_version=3,
+            actor="synthetic:tester",
+        )
+        self.assertEqual(self.e.audit_log(self.p.id)[-1], event)
+        with self.assertRaisesRegex(TreeError, "Requirement version conflict"):
+            self.e.unlink_requirement_decision(
+                self.p.id, item.id, proposal.id, expected_version=2,
+                actor="synthetic:tester",
+            )
 
 if __name__ == "__main__":
     unittest.main()
