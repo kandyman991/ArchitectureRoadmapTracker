@@ -228,8 +228,8 @@ class CanonicalTreeTests(unittest.TestCase):
     def test_repository_binding_rejects_unsafe_values_atomically(self):
         before = self.engine.projects()
         unsafe = (
-            "org/repo\\nforged",
-            "org/repo\\x7f",
+            "org/repo" + chr(10),
+            "org/repo" + chr(127),
             "https://user:secret@github.com/org/repo",
             "https://github.com/org/repo?access_token=secret",
         )
