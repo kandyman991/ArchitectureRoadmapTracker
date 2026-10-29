@@ -1,39 +1,28 @@
 # Architecture Roadmap Tracker
 
-**Status: M0 architecture/governance bootstrap in review. No application functionality has been implemented.**
+Tree-first, GitHub-connected development control center. **T0 architecture and governance are merged. T1.1 canonical model is in draft PR #3; no production UI or cloud jobs exist yet.**
 
-Architecture Roadmap Tracker is a **tree-first, GitHub-connected development control center** for multiple software projects. Users navigate an unlimited-depth roadmap, inspect a selected node, make recorded decisions, and initiate authorized development, review and verification jobs. Each job returns traceable evidence to its roadmap node.
+## Project contracts
 
-## Start here
+- ARCHITECTURE.md — binding architecture and trust boundaries
+- REQUIREMENTS.md — numbered acceptance requirements
+- ROADMAP.md — milestone and submilestone plan
+- AGENTS.md — mandatory engineering and PR rules
+- DECISIONS.md — approved architecture decisions and change process
+- CHAT_HANDOFF.md and docs/CHECKPOINTS.md — curated cross-session progress
 
-1. [ARCHITECTURE.md](ARCHITECTURE.md) — binding product and system boundaries.
-2. [REQUIREMENTS.md](REQUIREMENTS.md) — numbered, testable requirements.
-3. [ROADMAP.md](ROADMAP.md) — milestones and explicit exit gates.
-4. [AGENTS.md](AGENTS.md) — mandatory rules for people and coding assistants.
-5. [DECISIONS.md](DECISIONS.md) — approved choices and ADR change process.
-6. [CHAT_HANDOFF.md](CHAT_HANDOFF.md) and [docs/CHECKPOINTS.md](docs/CHECKPOINTS.md) — curated cross-session continuity.
-7. [docs/CONTINUITY.md](docs/CONTINUITY.md) — live GitHub verification and handoff procedure.
+## T1.1 structural prototype
 
-## Non-negotiable design
+The dependency-free in-memory Python core is in src/architecture_roadmap_tracker and described in docs/T1_1_CANONICAL_TREE.md. It implements stable-ID projects/nodes, a single ordered unlimited-depth hierarchy, safe moves/reordering, archive/restore, snapshot traversal, and validated commands.
 
-- One canonical, ordered, unlimited-depth tree with stable IDs, not independent copies for roadmap and progress.
-- Tree navigation, node inspector and job center are the primary workspace.
-- Nodes can link multiple requirements, PRs, code reviews, findings, CI runs, decisions, jobs and dependencies.
-- Implementation, review, verification, completion and merge are **different** states; no inferred milestone completion on PR merge.
-- External execution requires explicit scope, permissions, approval and audit trail. Never silently merge, deploy or change architecture.
-- Cloud-first, multi-project, usable without ChatGPT; ChatGPT is one authorized client of the same command interface.
+Run from the repository root (Python 3.10+):
 
-## First real-world validation
+    PYTHONPATH=src python3 -m unittest discover -s tests -v
 
-Use a **read-only/synthetic** import based on ReportMaker's M6.5 review and follow-up history to prove the tracker does not mistake a merged PR for full milestone acceptance. Do not copy private reports, customer data, repository tokens or credentials into this public repository.
+The required architecture-contract CI checks these regressions on each PR. **No persistent database, web UI, GitHub synchronization, ChatGPT tool adapter or cloud job runner has been implemented.**
 
-## Development
+## Product workflow
 
-This bootstrap PR is documentation and a dependency-free governance check only; it does **not** choose a web framework, database, hosting provider or runner vendor. See the reviewed gates in [ROADMAP.md](ROADMAP.md). Run the offline check:
+The roadmap tree is navigation, the Inspector is for decisions, and the Job Center is for controlling remote jobs. Each tree node may eventually reference multiple PRs, reviews, decisions, jobs and dependencies. A merged PR alone never means milestone acceptance.
 
-```sh
-python3 scripts/check_contract.py
-python3 -m unittest discover -s tests -v
-```
-
-Do not treat this README as evidence of live CI or finished functionality. Verify the exact GitHub PR head and check results before merge.
+See the live [T1.1 draft PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3). Do not merge without the owner's explicit authorization.
