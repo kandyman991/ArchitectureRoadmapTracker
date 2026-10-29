@@ -223,7 +223,9 @@ elements.tree.addEventListener("click", (event) => {
 
 elements.tree.addEventListener("keydown", (event) => {
   const row = event.target.closest('[role="treeitem"]');
-  if (!row) return;
+  // A focused expand button has its own native Enter/Space click behavior.
+  // Do not also interpret its bubbled keydown as a tree-row command.
+  if (!row || event.target !== row) return;
   const key = event.key;
   if (["ArrowDown", "ArrowUp", "Home", "End"].includes(key)) {
     event.preventDefault();
