@@ -122,6 +122,12 @@ def _ids(values: tuple[str, ...], label: str) -> tuple[str, ...]:
     return values
 
 
+def _check_requirement_version(current: Requirement, expected_version: int) -> None:
+    """Reject stale edits, including apparently idempotent link commands."""
+    if type(expected_version) is not int or expected_version != current.version:
+        raise TreeError("Requirement version conflict")
+
+
 class GovernanceCommands:
     """Validated domain operations mixed into the single CommandEngine.
 
@@ -179,8 +185,7 @@ class GovernanceCommands:
     ) -> Requirement:
         from dataclasses import replace
         prior = self.requirement(project_id, requirement_id)
-        if isinstance(expected_version, bool) or not isinstance(expected_version, int) or expected_version != prior.version:
-            raise TreeError("Requirement version conflict")
+        _check_requirement_version(prior, expected_version)
         title = prior.title if title is None else _text(title, "requirement title", limit=300)
         criteria = prior.criteria if criteria is None else _criteria(criteria)
         if title == prior.title and criteria == prior.criteria:
@@ -193,22 +198,27 @@ class GovernanceCommands:
 
     def link_requirement_node(
         self: CommandEngine, project_id: str, requirement_id: str, node_id: str, *,
-        actor: str, rationale: str = "",
+        expected_version: int, actor: str, rationale: str = "",
     ) -> Requirement:
-        return self._change_requirement_link(project_id, requirement_id, node_id, True, actor, rationale)
+        return self._change_requirement_link(
+            project_id, requirement_id, node_id, True, expected_version, actor, rationale,
+        )
 
     def unlink_requirement_node(
         self: CommandEngine, project_id: str, requirement_id: str, node_id: str, *,
-        actor: str, rationale: str = "",
+        expected_version: int, actor: str, rationale: str = "",
     ) -> Requirement:
-        return self._change_requirement_link(project_id, requirement_id, node_id, False, actor, rationale)
+        return self._change_requirement_link(
+            project_id, requirement_id, node_id, False, expected_version, actor, rationale,
+        )
 
     def _change_requirement_link(
         self: CommandEngine, project_id: str, requirement_id: str, node_id: str,
-        add: bool, actor: str, rationale: str,
+        add: bool, expected_version: int, actor: str, rationale: str,
     ) -> Requirement:
         from dataclasses import replace
         original = self.requirement(project_id, requirement_id)
+        _check_requirement_version(original, expected_version)
         self.node(project_id, node_id)
         if add and self.effectively_archived(project_id, node_id):
             raise TreeError("Cannot link archived node")
@@ -226,17 +236,41 @@ class GovernanceCommands:
 
     def link_requirement_decision(
         self: CommandEngine, project_id: str, requirement_id: str, decision_id: str, *,
-        actor: str, rationale: str = "",
+        expected_version: int, actor: str, rationale: str = "",
+    ) -> Requirement:
+        return self._change_requirement_decision_link(
+            project_id, requirement_id, decision_id, True, expected_version, actor, rationale,
+        )
+
+    def unlink_requirement_decision(
+        self: CommandEngine, project_id: str, requirement_id: str, decision_id: str, *,
+        expected_version: int, actor: str, rationale: str = "",
+    ) -> Requirement:
+        return self._change_requirement_decision_link(
+            project_id, requirement_id, decision_id, False, expected_version, actor, rationale,
+        )
+
+    def _change_requirement_decision_link(
+        self: CommandEngine, project_id: str, requirement_id: str, decision_id: str,
+        add: bool, expected_version: int, actor: str, rationale: str,
     ) -> Requirement:
         from dataclasses import replace
         original = self.requirement(project_id, requirement_id)
+        _check_requirement_version(original, expected_version)
         self.architecture_decision(project_id, decision_id)
-        if decision_id in original.decision_ids:
+        linked = decision_id in original.decision_ids
+        if linked == add:
             return original
-        changed = replace(original, decision_ids=(*original.decision_ids, decision_id),
-                          version=original.version + 1)
-        event = self._event(project_id, "requirement.link_decision", "requirement", original.id,
-                            original, changed, actor=actor, rationale=rationale)
+        ids = (
+            (*original.decision_ids, decision_id) if add
+            else tuple(item for item in original.decision_ids if item != decision_id)
+        )
+        changed = replace(original, decision_ids=ids, version=original.version + 1)
+        event = self._event(
+            project_id, "requirement.link_decision" if add else "requirement.unlink_decision",
+            "requirement", original.id, original, changed,
+            actor=actor, rationale=rationale,
+        )
         self._publish("_requirements", {**self._requirements, original.id: changed}, event)
         return changed
 
@@ -266,9 +300,10 @@ class GovernanceCommands:
     ) -> Dependency:
         target_project_id = project_id if target_project_id is None else target_project_id
         self.node(project_id, source_node_id)
-        self.node(target_project_id, target_node_id)
         if project_id != target_project_id and allow_cross_project is not True:
+            # Do not disclose foreign project/node existence before explicit opt-in.
             raise TreeError("Explicit cross-project reference required")
+        self.node(target_project_id, target_node_id)
         if not isinstance(kind, DependencyKind):
             raise TreeError("Unknown dependency kind")
         if self.effectively_archived(project_id, source_node_id) or self.effectively_archived(target_project_id, target_node_id):
