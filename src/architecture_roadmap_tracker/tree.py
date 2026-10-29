@@ -267,19 +267,27 @@ class CommandEngine:
         )
 
     def walk(self, project_id: str, node_id: str | None = None) -> Iterator[RoadmapNode]:
-        """Iterative preorder traversal, including node_id when given."""
+        """Snapshot-consistent, iterative preorder traversal; no depth limit."""
         self.project(project_id)
-        if node_id is None:
-            pending = [node.id for node in reversed(self.children(project_id))]
-        else:
+        if node_id is not None:
             self.node(project_id, node_id)
-            pending = [node_id]
-        while pending:
-            current_id = pending.pop()
-            yield self._nodes[current_id]
-            pending.extend(
-                node.id for node in reversed(self.children(project_id, current_id))
-            )
+        snapshot = self._nodes  # Published dictionaries are never mutated in-place.
+        root_ids = (
+            [node_id] if node_id is not None
+            else self._siblings(snapshot, project_id, None)
+        )
+
+        def traverse() -> Iterator[RoadmapNode]:
+            pending = list(reversed(root_ids))
+            while pending:
+                current_id = pending.pop()
+                current = snapshot[current_id]
+                yield current
+                pending.extend(
+                    reversed(self._siblings(snapshot, project_id, current_id))
+                )
+
+        return traverse()
 
     def _commit(self, proposed: dict[str, RoadmapNode]) -> None:
         self._validate(proposed)
