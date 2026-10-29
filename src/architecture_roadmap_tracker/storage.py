@@ -6,6 +6,7 @@ transaction before publishing it to the live in-memory engine.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 from hashlib import sha256
 import hmac
 import os
@@ -36,8 +37,13 @@ class SQLiteSnapshotStore:
             raise TreeError("SQLite store requires a persistent filesystem path")
         self._migrate()
 
-    def _connection(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.path, timeout=10.0, isolation_level=None)
+    @contextmanager
+    def _connection(self):
+        con = sqlite3.connect(self.path, timeout=10.0, isolation_level=None)
+        try:
+            yield con
+        finally:
+            con.close()
 
     def _migrate(self) -> None:
         with self._connection() as con:
