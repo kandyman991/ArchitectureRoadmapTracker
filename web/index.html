@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Architecture Roadmap Tracker — T2.1</title>
+  <link rel="stylesheet" href="/app.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#roadmap-heading">Skip to roadmap</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">⌘</span>
+      <div>
+        <div class="brand-title">Architecture Roadmap Tracker</div>
+        <div class="brand-subtitle">Tree-first development workspace</div>
+      </div>
+    </div>
+    <span class="mode">T2.1 · Local reference prototype</span>
+  </header>
+  <main class="layout">
+    <section class="workspace-heading" aria-labelledby="workspace-title">
+      <div>
+        <p class="eyebrow">PROJECT WORKSPACE</p>
+        <h1 id="workspace-title">Roadmap</h1>
+        <p class="muted">One canonical tree. Select a node to inspect its context and use validated actions.</p>
+      </div>
+      <div class="project-controls">
+        <label for="project-picker">Project</label>
+        <select id="project-picker" aria-label="Project"></select>
+        <button id="new-project" type="button" class="button secondary">New project</button>
+      </div>
+    </section>
+    <section class="panel tree-panel" aria-labelledby="roadmap-heading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">NAVIGATION</p>
+          <h2 id="roadmap-heading">Roadmap tree</h2>
+        </div>
+        <div class="toolbar">
+          <button id="new-root" class="button secondary" type="button">+ Root node</button>
+          <button id="refresh" class="button quiet" type="button" title="Reload workspace">Refresh</button>
+        </div>
+      </div>
+      <p id="tree-hint" class="hint">Up/Down to navigate · Left/Right to fold or unfold · Home/End to jump</p>
+      <ul id="tree" class="tree" role="tree" aria-label="Roadmap nodes" aria-describedby="tree-hint"></ul>
+      <p id="empty-tree" class="empty" hidden>No nodes yet. Create a root node to start the roadmap.</p>
+    </section>
+    <aside class="panel inspector" aria-labelledby="inspector-heading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">CONTEXT</p>
+          <h2 id="inspector-heading">Selected node</h2>
+        </div>
+      </div>
+      <div id="selection-detail">
+        <p class="muted">Select a node in the roadmap tree.</p>
+      </div>
+      <div id="node-actions" class="action-grid" hidden>
+        <button class="button primary" type="button" data-action="child">+ Child</button>
+        <button class="button secondary" type="button" data-action="sibling">+ Sibling</button>
+        <button class="button secondary" type="button" data-action="rename">Rename</button>
+        <button class="button secondary" type="button" data-action="up">Move up</button>
+        <button class="button secondary" type="button" data-action="down">Move down</button>
+        <button class="button danger" type="button" data-action="archive">Archive</button>
+      </div>
+      <form id="edit-form" class="edit-form" hidden>
+        <h3 id="form-heading">Node</h3>
+        <label for="node-title">Title</label>
+        <input id="node-title" name="title" maxlength="300" required autocomplete="off">
+        <div class="form-buttons">
+          <button class="button primary" type="submit">Save</button>
+          <button id="cancel-edit" class="button quiet" type="button">Cancel</button>
+        </div>
+      </form>
+      <div class="boundary">
+        <strong>Next: T2.2 Inspector</strong>
+        <p>Requirements, acceptance evidence, PRs, reviews, jobs and decision approvals are not connected yet. A node selection is not milestone acceptance.</p>
+      </div>
+    </aside>
+  </main>
+  <footer class="page-footer">
+    <p id="feedback" role="status" aria-live="polite">Loading workspace…</p>
+    <p>Development-only server: no authentication or public hosting. Synthetic data only.</p>
+  </footer>
+</body>
+</html>
