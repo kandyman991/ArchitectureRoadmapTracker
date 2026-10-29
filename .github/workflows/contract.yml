@@ -28,3 +28,5 @@ jobs:
         env:
           PYTHONPATH: src
         run: python3 -m unittest discover -s tests -v
+      - name: Verify browser tree model interactions (dependency-free Node)
+        run: node --test tests/web/*.test.mjs

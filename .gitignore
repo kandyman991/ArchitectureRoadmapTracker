@@ -1,0 +1,8 @@
+# Local reference database and Python test state — never commit user data.
+.local/
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.py[cod]
+.pytest_cache/
