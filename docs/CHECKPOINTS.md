@@ -1,24 +1,30 @@
 # Curated development checkpoints
 
-## CP-T1.1 — draft canonical tree implementation
+## CP-T1.2 — draft domain governance / audit
 
-- **2026-10-29:** [PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3), branch feature/t1-1-canonical-tree, base main 5eecd748a32a106bb9bcdff3b695a5d169fa256d; unmerged.
-- **Verified implementation revision:** 46e7183bc086a741dd1d372716cf4a1cf11c7e6f. [Run #40890002136](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40890002136) succeeded with 29 tests. Verify any later commits separately.
-- **Scope:** structural parts of ART-001/ART-002/ART-004: project isolation, immutable typed nodes, stable UUIDs, arbitrary nesting, deterministic sibling positions, atomic reparent/reorder, cycle rejection, archive/restore, snapshot iteration.
-- **Corrections before green CI:** repaired an incorrect reorder test expectation and made traversal stable under later commands.
-- **Pending:** independent technical review of T1.1, final-head CI on any later changes, explicit owner authorization to merge.
-- **Still missing:** T1.2 requirements, dependencies, decision audit; T1.3 persistence/migrations/concurrency; T2 UI; T3 GitHub; T4 acceptance; T5 jobs; T6 ChatGPT.
-- **Separate-session review:** a different ChatGPT review session inspected T1.1 architecture, security and data integrity against the repository contracts on 2026-10-29; it is **not an external/human independent approval**. F1: normalized duplicate acceptance criteria could be stored; F2: repo binding accepted control characters and credential-bearing/query URLs. Corrections and new synthetic regressions were pushed to PR #3; inspect the live final head and its CI before clearance.
-- **Remaining limitations:** T1.1 has no durable storage, permission checks, asynchronous jobs or concurrency controls; those are explicitly future milestones, not silently accepted production capabilities.
-- **Next:** verify exact post-correction PR head and architecture-contract run, record review limitations, then await explicit owner authorization; leave main untouched.
+- **2026-10-29:** [Draft PR #4](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4), branch feature/t1-2-governance-audit, based on main adceec5eabbdad0a52dc95bc2bf11ec3b51dc003. Under development; not merged or accepted.
+- **Scope:** ART-005 typed edges (including cross-project explicit references, cycle prevention and deactivation); ART-011 versioned testable requirement records and many-to-many node links; ART-015 immutable decision and ADR proposals; ART-030 immutable before/after audit journal shared by all existing structural and new domain commands.
+- **Privacy and trust:** test data synthetic; actor strings are unverified, proposals are not approvals. In-memory only; T1.3 persistence/recovery/concurrency, T3 authorization, and T4 acceptance remain unimplemented.
+- **Verification:** code/documentation revision **7744eaa2c7c896ba217088a6a8202a1184eaaa4b** passed mandatory [CI run 40901141881](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40901141881), **48 tests**. This is evidence only for that exact SHA; commits after checkpoint recording require their own check.
+- **Hardening:** immutable UTC proposal timestamps, multiline actor/action rejection to avoid spoofed audit text; proposal rationale/content may remain multiline.
+- **Separate-session AI review:** PR review [#5700453288](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/4#pullrequestreview-5700453288) reviewed head d425fd7214bbfd712e8152290fd50b13871ca2c7 against architecture/security/data-integrity contracts. This is a distinct ChatGPT conversation, not an external human review or a separate GitHub identity.
+- **Review corrections:** M1 stale requirement node/ADR link edits now require matching expected version; M2 erroneous ADR links can be removed through an audited, version-bumping command; L1 cross-project intent validation now precedes foreign target lookup. New synthetic regressions added.
+- **Fresh verification:** old run 40901283308 was green for d425fd7214bbfd712e8152290fd50b13871ca2c7 only. The **final corrected PR head** requires a new successful architecture-contract run; do not infer clearance from an earlier revision.
+- **Pending:** reverify live CI on the exact corrected final head, inspect merge protection/review conversations, merge only if green under the owner's explicit 2026-10-29 authorization. T1.3 remains a separate milestone.
+
+## CP-T1.1 — canonical tree accepted
+
+- [PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3) merged with owner authorization on 2026-10-29 at adceec5eabbdad0a52dc95bc2bf11ec3b51dc003.
+- Final PR head 95a7c60d3ae0dd057f52039a1dfc55d92848e7a6 passed required CI [40892263612](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40892263612), 31 tests; post-merge main [40892711724](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40892711724) passed.
+- Two medium findings resolved: duplicate normalized acceptance criteria and unsafe control/credential-bearing repository bindings. Review was separate ChatGPT session, **not external human approval**.
+- In-memory tree with stable IDs, iterative arbitrary-depth traversal, atomic validated reorder/reparent, archive and project isolation. Not durable.
 
 ## CP-T0 — governance accepted
 
-- [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) merged 2026-10-29 at 5eecd748a32a106bb9bcdff3b695a5d169fa256d following explicit authorization.
-- Final PR [CI #40888078278](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888078278) passed 9 tests, and main push [CI #40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255) passed.
-- [Main branch ruleset 26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) active at verification; setup issue #2 closed.
-- Technical review was in the same authoring workflow, not a separate independent review.
+- [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) merged 2026-10-29 at 5eecd748a32a106bb9bcdff3b695a5d169fa256d.
+- T0 CI [40888078278](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888078278) passed and main push CI [40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255) passed.
+- [Main ruleset 26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) active at verification; solo maintainer has zero required external approvals; owner-authorized PR merge still mandatory.
 
-## New checkpoint procedure
+## Checkpoint procedure
 
-At PR and milestone boundaries record exact main/PR SHAs, check URL and result, review provenance, remaining scope and next authorized step. Live GitHub wins over old snapshots.
+At each PR boundary record main/PR exact SHAs, required CI run and conclusion, review provenance, corrected and unresolved findings, scope boundaries, remaining work and next authorized step. Live GitHub state overrides old checkpoint text.
