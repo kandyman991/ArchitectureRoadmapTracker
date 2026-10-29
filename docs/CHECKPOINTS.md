@@ -8,7 +8,9 @@
 - **Corrections before green CI:** repaired an incorrect reorder test expectation and made traversal stable under later commands.
 - **Pending:** independent technical review of T1.1, final-head CI on any later changes, explicit owner authorization to merge.
 - **Still missing:** T1.2 requirements, dependencies, decision audit; T1.3 persistence/migrations/concurrency; T2 UI; T3 GitHub; T4 acceptance; T5 jobs; T6 ChatGPT.
-- **Next:** review PR #3 and correct findings, leave main untouched.
+- **Separate-session review:** a different ChatGPT review session inspected T1.1 architecture, security and data integrity against the repository contracts on 2026-10-29; it is **not an external/human independent approval**. F1: normalized duplicate acceptance criteria could be stored; F2: repo binding accepted control characters and credential-bearing/query URLs. Corrections and new synthetic regressions were pushed to PR #3; inspect the live final head and its CI before clearance.
+- **Remaining limitations:** T1.1 has no durable storage, permission checks, asynchronous jobs or concurrency controls; those are explicitly future milestones, not silently accepted production capabilities.
+- **Next:** verify exact post-correction PR head and architecture-contract run, record review limitations, then await explicit owner authorization; leave main untouched.
 
 ## CP-T0 — governance accepted
 
