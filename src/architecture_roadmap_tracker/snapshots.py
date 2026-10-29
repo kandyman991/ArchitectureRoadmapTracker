@@ -235,6 +235,17 @@ def _validate_engine(engine: CommandEngine) -> None:
             _ensure(item.supersedes_id in engine._architecture_decisions and
                     engine._architecture_decisions[item.supersedes_id].project_id == item.project_id
                     and item.supersedes_id != item.id, "Invalid ADR supersession")
+    # Proposed ADRs can supersede only previously existing decisions through
+    # commands. Untrusted snapshots must not create an impossible cyclic chain.
+    settled_adr: set[str] = set()
+    for adr_id in engine._architecture_decisions:
+        chain: set[str] = set()
+        current_id: str | None = adr_id
+        while current_id is not None and current_id not in settled_adr:
+            _ensure(current_id not in chain, "ADR supersession cycle")
+            chain.add(current_id)
+            current_id = engine._architecture_decisions[current_id].supersedes_id
+        settled_adr.update(chain)
     for item in engine._decision_proposals.values():
         _ensure(item.project_id in engine._projects, "Unknown proposal project")
         _ensure(type(item.state) is ProposalState and item.state is ProposalState.PROPOSED,
@@ -344,6 +355,8 @@ def _verify_audit_replay(engine: CommandEngine) -> None:
             updated = event.after
             _ensure(all(type(v) is cls for v in (*previous, *updated)),
                     "Invalid structural audit records")
+            _ensure(all(v.project_id == event.project_id for v in (*previous, *updated)),
+                    "Audit changed node outside project")
             old = {v.id: v for v in previous}
             new = {v.id: v for v in updated}
             _ensure(len(old) == len(previous) and len(new) == len(updated),
