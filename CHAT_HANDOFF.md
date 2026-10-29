@@ -18,6 +18,10 @@
 - Snapshot codec rejects unknown types, invalid entity relationships, cycles, duplicate records, invalid journal sequence, and audited before/after history that does not reconstruct the final canonical records. SQLite transactional CAS handles distinct writer instances, not simultaneous command evaluation on the same instance.
 - No auth, real user permissions, cloud hosting, UI, GitHub sync, evidence acceptance, background jobs, or ChatGPT tool surface. No production-grade signed audit or backup system. No human decision is inferred from a proposal.
 
+## Verified authoring CI checkpoint
+
+- Revision `ab5355bdfa707cd8676cb0d7795fc06616c47718` passed mandatory [architecture-contract run #40905434303](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40905434303): successful contract validation and **60/60 tests** on 2026-10-29. This is **authoring verification, not independent technical review**, and applies **only** to that commit. Documentation commits after it require fresh exact-head CI.
+
 ## Current gate / next action
 
 Verify CI at the **latest live PR #5 head** (do not reuse older run evidence); correct any findings; review the ADR and storage trade-offs independently; obtain a **separate** architecture/security/data-integrity review with honest provenance; correct findings and rerun exact-head CI. Seek explicit owner decision on ADR-0009 and explicit approval to merge. The authoring session is not an independent review, and neither green CI nor an open draft PR implies T1.3 acceptance. Do not begin T2 on the same branch.
