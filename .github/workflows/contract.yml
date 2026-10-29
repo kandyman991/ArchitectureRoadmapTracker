@@ -1,0 +1,28 @@
+name: Architecture contract
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  architecture-contract:
+    name: architecture-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate architecture, roadmap and continuity offline
+        run: python3 scripts/check_contract.py
+      - name: Run offline regression tests
+        run: python3 -m unittest discover -s tests -v
