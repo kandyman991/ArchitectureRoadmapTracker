@@ -6,7 +6,7 @@
 - Scope: deterministic read-only canonical tree projections; versioned typed snapshot export/import preserving immutable audit before/after history; strict graph/journal replay validation; SQLite reference persist-before-publish command storage, transactional v1-to-v2 migration, optimistic revision conflict rejection, and synthetic regressions.
 - **Proposed ADR-0009:** evaluate SQLite versus atomic JSON and PostgreSQL. SQLite is a reversible reference adapter only; no final production datastore selection or change to `DECISIONS.md` is approved.
 - Limits: no authenticated identity, project permission gate, hosted multi-user storage, signed audit, production backup/restore, acceptance/evidence engine, UI or cloud jobs. Per-instance concurrent command evaluation remains out of scope; separate process writers use SQLite CAS.
-- **Verification:** first implementation CI may precede later code/docs commits. Inspect live required run on the **exact final PR head**; never promote a prior run to final verification.
+- **Verified authoring checkpoint:** PR head `ab5355bdfa707cd8676cb0d7795fc06616c47718` passed mandatory [architecture-contract run #40905434303](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40905434303), **60 tests** and baseline check. This check predates the checkpoint documentation commit and is not proof for a later final head; reverify after it. CI/self-review is not independent technical review.
 - **Next:** independent architecture/security/data-integrity review and ADR decision, fix all findings, rerun final-head CI, and request explicit owner authorization before merge. Self-review is not independent.
 
 ## CP-T1.2 — merged and reviewed governance / audit
