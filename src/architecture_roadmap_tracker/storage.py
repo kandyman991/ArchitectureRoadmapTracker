@@ -14,7 +14,7 @@ from pathlib import Path
 import sqlite3
 
 from .errors import TreeError
-from .snapshots import export_snapshot, import_snapshot
+from .snapshots import MAX_SNAPSHOT_BYTES, export_snapshot, import_snapshot
 from .tree import CommandEngine
 
 SCHEMA_VERSION = 2
@@ -60,11 +60,16 @@ class SQLiteSnapshotStore:
                     con.execute("PRAGMA user_version=1")
                     version = 1
                 if version == 1:
-                    con.execute("ALTER TABLE snapshots ADD COLUMN revision INTEGER NOT NULL DEFAULT 0")
-                    con.execute("ALTER TABLE snapshots ADD COLUMN digest TEXT NOT NULL DEFAULT ''")
-                    for identity, payload in con.execute("SELECT id, payload FROM snapshots").fetchall():
+                    # Validate historic content before changing the schema. On a
+                    # failed import BEGIN IMMEDIATE rolls back *all* DDL and DML.
+                    historic_rows = con.execute("SELECT id, payload FROM snapshots").fetchall()
+                    for identity, payload in historic_rows:
                         if identity != 1 or type(payload) is not bytes:
                             raise TreeError("Invalid historic snapshot row")
+                        import_snapshot(payload)
+                    con.execute("ALTER TABLE snapshots ADD COLUMN revision INTEGER NOT NULL DEFAULT 0")
+                    con.execute("ALTER TABLE snapshots ADD COLUMN digest TEXT NOT NULL DEFAULT ''")
+                    for identity, payload in historic_rows:
                         con.execute("UPDATE snapshots SET digest=? WHERE id=?",
                                     (sha256(payload).hexdigest(), identity))
                     con.execute("PRAGMA user_version=2")
@@ -92,8 +97,19 @@ class SQLiteSnapshotStore:
         with self._connection() as con:
             con.execute("BEGIN IMMEDIATE")
             try:
-                row = con.execute("SELECT revision FROM snapshots WHERE id=1").fetchone()
-                actual = 0 if row is None else row[0]
+                row = con.execute(
+                    "SELECT payload, revision, digest FROM snapshots WHERE id=1"
+                ).fetchone()
+                if row is not None:
+                    stored_payload, actual, digest = row
+                    if (type(stored_payload) is not bytes
+                            or len(stored_payload) > MAX_SNAPSHOT_BYTES
+                            or type(actual) is not int or actual < 0
+                            or type(digest) is not str
+                            or not hmac.compare_digest(sha256(stored_payload).hexdigest(), digest)):
+                        raise TreeError("Existing snapshot is corrupt; refusing to overwrite")
+                else:
+                    actual = 0
                 if actual != expected_revision:
                     raise RevisionConflict("Storage revision conflict; reopen from disk")
                 new_revision = expected_revision + 1
