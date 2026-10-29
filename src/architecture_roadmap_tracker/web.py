@@ -251,14 +251,14 @@ class TreeShellHandler(BaseHTTPRequestHandler):
                 parse_constant=_reject_nonfinite,
             )
             result = self.server.service.execute(request)
-        except (ValueError, UnicodeError, json.JSONDecodeError):
-            self._error(400, "Invalid JSON command")
         except RevisionConflict:
             self._error(409, "Workspace changed; reload before editing")
         except NotFound:
             self._error(404, "Project or node not found")
         except TreeError as exc:
             self._error(422, str(exc))
+        except (ValueError, UnicodeError, json.JSONDecodeError):
+            self._error(400, "Invalid JSON command")
         except sqlite3.DatabaseError:
             self._error(503, "Storage unavailable or invalid")
         else:
