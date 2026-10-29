@@ -98,6 +98,12 @@ class SnapshotTests(unittest.TestCase):
         corrupt["audit"][0]["fields"]["sequence"] = 17
         cases.append(corrupt)
         corrupt = json.loads(original)
+        corrupt["projects"][0]["fields"]["name"] = "Forged canonical record"
+        cases.append(corrupt)
+        corrupt = json.loads(original)
+        corrupt["audit"][2]["fields"]["before"] = None
+        cases.append(corrupt)
+        corrupt = json.loads(original)
         corrupt["architecture_decisions"][0]["fields"]["state"]["value"] = "approved"
         cases.append(corrupt)
         corrupt = json.loads(original)
