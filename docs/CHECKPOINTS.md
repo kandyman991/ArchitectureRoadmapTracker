@@ -1,23 +1,22 @@
 # Curated development checkpoints
 
-## CP-T1.1 — canonical project/node tree implementation
+## CP-T1.1 — draft canonical tree implementation
 
-- **Date:** 2026-10-29.
-- **State:** draft implementation in [PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3); NOT merged or accepted.
-- **Starting base:** verified main SHA 5eecd748a32a106bb9bcdff3b695a5d169fa256d.
-- **Branch:** feature/t1-1-canonical-tree. Check live GitHub for the current head, review findings, and exact-head CI; do not assume an old check applies.
-- **Scope:** pure in-memory project/node tree, typed IDs, unlimited nesting, contiguous sibling order, safe structural commands and synthetic regression tests. Structural ART-001, ART-002, ART-004 only; ART-030 external adapters not implemented.
-- **Validation plan:** existing architecture-contract plus deep/wide tree regression tests. CI and independent review remain unverified until inspected on final head.
-- **Not in T1.1:** durable persistence, concurrency, audit/dependencies, app UI, GitHub integration, evidence acceptance, cloud job execution and ChatGPT plugin.
-- **Next:** inspect PR #3 CI, correct any regression failures, obtain independent technical review if available, and await explicit owner authorization before merge.
+- **2026-10-29:** [PR #3](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/3), branch feature/t1-1-canonical-tree, base main 5eecd748a32a106bb9bcdff3b695a5d169fa256d; unmerged.
+- **Verified implementation revision:** 46e7183bc086a741dd1d372716cf4a1c321e503 is NOT the PR #3 head; the actual tested T1.1 revision is 46e7183bc086a741dd1d372716cf4a1cf11c7e6f. [Run #40890002136](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40890002136) succeeded with 29 tests. Verify any later commits separately.
+- **Scope:** structural parts of ART-001/ART-002/ART-004: project isolation, immutable typed nodes, stable UUIDs, arbitrary nesting, deterministic sibling positions, atomic reparent/reorder, cycle rejection, archive/restore, snapshot iteration.
+- **Corrections before green CI:** repaired an incorrect reorder test expectation and made traversal stable under later commands.
+- **Pending:** independent technical review of T1.1, final-head CI on any later changes, explicit owner authorization to merge.
+- **Still missing:** T1.2 requirements, dependencies, decision audit; T1.3 persistence/migrations/concurrency; T2 UI; T3 GitHub; T4 acceptance; T5 jobs; T6 ChatGPT.
+- **Next:** review PR #3 and correct findings, leave main untouched.
 
-## CP-T0 — accepted governance foundation
+## CP-T0 — governance accepted
 
-- PR [#1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) merged on 2026-10-29 as main commit 5eecd748a32a106bb9bcdff3b695a5d169fa256d.
-- Final-head [CI run 40888078278](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888078278) passed 9 tests; post-merge main [run 40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255) passed.
-- Branch-protection [ruleset 26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) active; configuration issue [#2](https://github.com/kandyman991/ArchitectureRoadmapTracker/issues/2) closed.
-- T0 review was part of the original assistant workflow, not a separate external reviewer. Do not claim otherwise.
+- [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) merged 2026-10-29 at 5eecd748a32a106bb9bcdff3b695a5d169fa256d following explicit authorization.
+- Final PR [CI #40888078278](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888078278) passed 9 tests, and main push [CI #40888260255](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40888260255) passed.
+- [Main branch ruleset 26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) active at verification; setup issue #2 closed.
+- Technical review was in the same authoring workflow, not a separate independent review.
 
-## Handoff procedure
+## New checkpoint procedure
 
-At PR and milestone boundaries record exact main/PR SHAs, verified check URL/conclusion, reviewer provenance, unresolved findings and the next authorized task. Live GitHub wins over historical checkpoints.
+At PR and milestone boundaries record exact main/PR SHAs, check URL and result, review provenance, remaining scope and next authorized step. Live GitHub wins over old snapshots.
