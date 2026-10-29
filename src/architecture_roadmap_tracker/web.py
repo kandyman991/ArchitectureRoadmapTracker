@@ -23,6 +23,19 @@ WEB_ROOT = Path(__file__).resolve().parents[2] / "web"
 MAX_COMMAND_BYTES = 16 * 1024
 ACTOR = "prototype:unverified-local-operator"
 
+def _strict_json_pairs(pairs: list[tuple[str, object]]) -> dict:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON field")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite(value: str):
+    raise ValueError("Nonfinite JSON constant")
+
+
 _STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.css": ("app.css", "text/css; charset=utf-8"),
@@ -182,7 +195,11 @@ class TreeShellHandler(BaseHTTPRequestHandler):
         if not self._valid_host():
             self._error(400, "Invalid host")
             return
-        path = urlsplit(self.path)
+        try:
+            path = urlsplit(self.path)
+        except ValueError:
+            self._error(404, "Not found")
+            return
         if path.query or path.fragment:
             self._error(404, "Not found")
             return
@@ -229,7 +246,10 @@ class TreeShellHandler(BaseHTTPRequestHandler):
                 self._error(413, "Command too large or empty")
                 return
             payload = self.rfile.read(length)
-            request = json.loads(payload.decode("utf-8"), parse_constant=lambda _: None)
+            request = json.loads(
+                payload.decode("utf-8"), object_pairs_hook=_strict_json_pairs,
+                parse_constant=_reject_nonfinite,
+            )
             result = self.server.service.execute(request)
         except (ValueError, UnicodeError, json.JSONDecodeError):
             self._error(400, "Invalid JSON command")
