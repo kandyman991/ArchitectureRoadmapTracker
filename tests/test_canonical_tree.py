@@ -40,7 +40,7 @@ class CanonicalTreeTests(unittest.TestCase):
         nodes = [self.engine.create_node(self.project.id, label) for label in "ABCD"]
         self.engine.move_node(self.project.id, nodes[1].id, new_parent_id=None, position=3)
         self.assertEqual(self.labels(), ["A", "C", "D", "B"])
-        self.engine.move_node(self.project.id, nodes[3].id, new_parent_id=None, position=0)
+        self.engine.move_node(self.project.id, nodes[1].id, new_parent_id=None, position=0)
         self.assertEqual(self.labels(), ["B", "A", "C", "D"])
 
     def test_move_parent_renumbers_both_groups(self):
@@ -182,6 +182,18 @@ class CanonicalTreeTests(unittest.TestCase):
         after = self.engine.children(self.project.id)
         self.assertEqual(after[-1].id, before[0].id)
         self.assertEqual([n.position for n in after], list(range(300)))
+
+    def test_started_iterator_is_snapshot_consistent_after_move(self):
+        root = self.engine.create_node(self.project.id, "Root")
+        a = self.engine.create_node(self.project.id, "A", parent_id=root.id)
+        b = self.engine.create_node(self.project.id, "B", parent_id=root.id)
+        iterator = self.engine.walk(self.project.id)
+        self.assertEqual(next(iterator).id, root.id)
+        self.engine.move_node(self.project.id, a.id, new_parent_id=None)
+        remaining = list(iterator)
+        self.assertEqual([n.id for n in remaining], [a.id, b.id])
+        self.assertEqual([n.id for n in self.engine.walk(self.project.id)],
+                         [root.id, b.id, a.id])
 
     def test_missing_project_or_node_raises_not_found(self):
         with self.assertRaises(NotFound):
