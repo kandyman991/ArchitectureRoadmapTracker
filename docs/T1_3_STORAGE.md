@@ -24,7 +24,8 @@ round-trip. `import_snapshot(payload)` always returns a **new** validated
 Input is hostile unless validated. The decoder rejects extra/unknown type
 tags, wrong collections, duplicate IDs, invalid enum/approval states, malformed
 timestamps, missing cross-references, orphaned parents, noncontiguous sibling
-positions, dependency cycles, and invalid audit sequences. Unknown future
+positions, dependency/ADR supersession cycles, cross-project audit rewrites,
+and invalid audit sequences. Unknown future
 format versions fail closed. Maximum snapshot size: 32 MiB. This is not a
 signed interchange format; no identity/authentication is claimed.
 
@@ -36,8 +37,11 @@ canonical snapshot containing the new audit entry, validate, commit atomically
 to SQLite with an optimistic database revision, and only then publish the
 candidate in-memory. Failed I/O or stale writers leave state/audit unchanged.
 Restart reloads and validates the committed snapshot. Database migration
-v0 -> v1 -> v2 is transactional; v1 -> v2 preserves stored payloads and adds
-revision/digest columns. SHA-256 digest detects accidental corruption, but
+v0 -> v1 -> v2 is transactional; v1 -> v2 validates historic snapshot content
+**before committing the migration**, preserves stored payloads and adds
+revision/digest columns. Failed imports roll back schema and data unchanged.
+Writers also recheck the persisted digest under the write transaction before
+overwriting a stored snapshot. SHA-256 detects accidental corruption, but
 is **not** tamper evidence against an attacker with database write access.
 
 This is a reference implementation with one JSON snapshot blob rather than a
@@ -58,7 +62,9 @@ Run from repository root:
 Synthetic tests exercise deterministic projected order/depth, project scope,
 full graph and journal round trip, corrupt records, future formats, deep
 hierarchy import, restart consistency, stale concurrent writers, SQLite
-transaction failure, v1->v2 migration, and digest failure.
+transaction failure, v1->v2 migration (including corrupt-history rollback),
+corrupt-on-disk write refusal, cross-project audited transfer rejection,
+cyclic ADR supersession rejection, and digest failure.
 
 Traceability: ART-002, ART-004, ART-005, ART-011, ART-015, ART-027,
 ART-028, ART-030. Later T4 work must still implement real revision-aware
