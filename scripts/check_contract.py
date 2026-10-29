@@ -15,7 +15,7 @@ def validate(root=ROOT):
     if missing:
         raise ValueError("Missing required contract files: " + ", ".join(missing))
     read = lambda path: (root / path).read_text(encoding="utf-8")
-    reqs = re.findall(r"(?m)^- \*\*(ART-\d{3})\*\*:", read("REQUIREMENTS.md"))
+    reqs = re.findall(r"(?m)^- \*\*(ART-\d{3}):\*\*", read("REQUIREMENTS.md"))
     if len(reqs) < 30 or len(reqs) != len(set(reqs)):
         raise ValueError("Numbered requirements missing or duplicated")
     for name in ("ARCHITECTURE.md", "AGENTS.md", "ROADMAP.md"):
