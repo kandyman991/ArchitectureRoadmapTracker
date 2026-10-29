@@ -95,7 +95,7 @@ function renderTree() {
     li.setAttribute("role", "none");
     const row = document.createElement("div");
     row.className = "tree-row";
-    if (node.archived) row.classList.add("archived");
+    if (node.effectively_archived) row.classList.add("archived");
     row.dataset.id = node.id;
     row.style.setProperty("--visual-depth", String(Math.min(node.depth, 10)));
     row.setAttribute("role", "treeitem");
@@ -146,7 +146,8 @@ function renderDetail() {
   title.textContent = node.title;
   const kind = document.createElement("p");
   kind.className = "detail-meta";
-  kind.textContent = node.kind + (node.archived ? " · Archived" : " · Active");
+  kind.textContent = node.kind + (node.archived ? " · Archived" :
+    node.effectively_archived ? " · Archived ancestor" : " · Active");
   const id = document.createElement("p");
   id.className = "detail-meta";
   id.textContent = "Stable ID: " + node.id;
@@ -157,12 +158,14 @@ function renderDetail() {
 
   const related = siblingsOf(outline(), node);
   const place = related.findIndex((item) => item.id === node.id);
+  const parent = outline().find((item) => item.id === node.parent_id);
+  const hasArchivedAncestor = Boolean(parent?.effectively_archived);
   for (const button of elements.actions.querySelectorAll("[data-action]")) {
     const action = button.dataset.action;
     if (action === "archive") button.textContent = node.archived ? "Restore" : "Archive";
     if (action === "up" && place === 0) button.disabled = true;
     if (action === "down" && place === related.length - 1) button.disabled = true;
-    if (node.archived && !["archive"].includes(action)) button.disabled = true;
+    if (hasArchivedAncestor || (node.archived && action !== "archive")) button.disabled = true;
   }
 }
 
