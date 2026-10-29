@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Iterator
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 
@@ -59,6 +60,27 @@ def _title(value: str) -> str:
     return value
 
 
+def _repository_binding(value: str) -> str:
+    """Keep opaque bindings free of controls and credential-bearing URLs.
+
+    This is input hygiene, not identity verification or permission enforcement.
+    The future GitHub adapter must independently validate authorization.
+    """
+    if not isinstance(value, str):
+        raise TreeError("Repository binding must be a string")
+    normalized = value.strip()
+    if not normalized or any(ord(char) < 32 or ord(char) == 127 for char in normalized):
+        raise TreeError("Repository binding contains invalid characters")
+    if "://" in normalized:
+        try:
+            parsed = urlsplit(normalized)
+        except ValueError:
+            raise TreeError("Invalid repository URL") from None
+        if parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
+            raise TreeError("Repository URLs must not contain credentials or query/fragment data")
+    return normalized
+
+
 def _position(position: int | None, count: int) -> int:
     if position is None:
         return count
@@ -97,12 +119,9 @@ class CommandEngine:
 
     def create_project(self, name: str, repositories: tuple[str, ...] = ()) -> Project:
         name = _title(name)
-        if not isinstance(repositories, tuple) or any(
-            not isinstance(repo, str) or not repo.strip() or "\x00" in repo
-            for repo in repositories
-        ):
-            raise TreeError("Repository bindings must be a tuple of nonempty strings")
-        normalized = tuple(repo.strip() for repo in repositories)
+        if not isinstance(repositories, tuple):
+            raise TreeError("Repository bindings must be a tuple")
+        normalized = tuple(_repository_binding(repo) for repo in repositories)
         if len(normalized) != len(set(normalized)):
             raise TreeError("Duplicate repository binding")
         project = Project(self._allocate_id(), name, normalized)
@@ -176,6 +195,8 @@ class CommandEngine:
         ):
             raise TreeError("Acceptance criteria must be nonempty string tuple")
         criteria = tuple(x.strip() for x in acceptance_criteria)
+        if len(criteria) != len(set(criteria)):
+            raise TreeError("Duplicate acceptance criterion")
         if parent_id is not None:
             self.node(project_id, parent_id)
             if self._is_effectively_archived(parent_id):
