@@ -299,6 +299,39 @@ class GovernanceTests(unittest.TestCase):
             )
         self.assertEqual(self.e.audit_log(self.p.id), before)
 
+    def test_actor_log_injection_rejected_without_side_effects(self):
+        before = self.e.audit_log(self.p.id)
+        with self.assertRaises(TreeError):
+            self.e.create_requirement(
+                self.p.id, "REQ-02", "Secure audit", ("Pass",),
+                actor="legitimate\\nadmin:approved",
+            )
+        with self.assertRaises(TreeError):
+            self.e.propose_decision(
+                self.p.id, "merge\\napproved", "No implicit authorization",
+                actor="synthetic:actor", proposed_value="true",
+            )
+        with self.assertRaises(TreeError):
+            self.e.rename_node(
+                self.p.id, self.a.id, "Never applied", actor="synthetic\\nimpersonator",
+            )
+        self.assertEqual(self.e.audit_log(self.p.id), before)
+        self.assertEqual(self.e.node(self.p.id, self.a.id).title, "A")
+
+    def test_decision_proposals_have_immutable_utc_timestamps(self):
+        proposal = self.e.propose_decision(
+            self.p.id, "Investigate", "Rationale with\\nparagraph",
+            actor="synthetic:reviewer", proposed_value="new\\ncontent",
+        )
+        adr = self.e.propose_architecture_decision(
+            self.p.id, "ADR-0020", "Consider layout", "Detailed\\nproposal",
+            actor="synthetic:reviewer",
+        )
+        self.assertEqual(proposal.created_at.tzinfo, timezone.utc)
+        self.assertEqual(adr.created_at.tzinfo, timezone.utc)
+        with self.assertRaises(dataclasses.FrozenInstanceError):
+            adr.created_at = proposal.created_at
+
 
 if __name__ == "__main__":
     unittest.main()
