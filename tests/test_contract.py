@@ -31,7 +31,7 @@ class ContractTests(unittest.TestCase):
             requirements = root / "REQUIREMENTS.md"
             requirements.write_text(
                 requirements.read_text(encoding="utf-8") +
-                "\n- **ART-001**: duplicate synthetic requirement\n",
+                "\n- **ART-001:** duplicate synthetic requirement\n",
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "duplicated"):
