@@ -6,7 +6,7 @@ does NOT authorize users, execute proposed decisions or persist the journal.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import re
 from typing import TYPE_CHECKING
@@ -57,6 +57,7 @@ class ArchitectureDecision:
     title: str
     rationale: str
     actor: str
+    created_at: datetime
     supersedes_id: str | None = None
     state: ProposalState = ProposalState.PROPOSED
 
@@ -71,6 +72,7 @@ class DecisionProposal:
     rationale: str
     previous_value: str
     proposed_value: str
+    created_at: datetime
     state: ProposalState = ProposalState.PROPOSED
 
 
@@ -88,12 +90,16 @@ class AuditEntry:
     after: object | None
 
 
-def _text(value: str, field: str, *, limit: int = 4000, allow_blank: bool = False) -> str:
+def _text(
+    value: str, field: str, *, limit: int = 4000,
+    allow_blank: bool = False, multiline: bool = False,
+) -> str:
     if not isinstance(value, str):
         raise TreeError(f"{field} must be a string")
     normalized = value.strip()
     if (not allow_blank and not normalized) or len(normalized) > limit or any(
-        (ord(c) < 32 and c not in "\n\t") or ord(c) == 127 for c in normalized
+        (ord(c) < 32 and (not multiline or c not in "\n\t")) or ord(c) == 127
+        for c in normalized
     ):
         raise TreeError(f"Invalid {field}")
     return normalized
@@ -333,7 +339,7 @@ class GovernanceCommands:
         if not re.fullmatch(r"ADR-[0-9]{4,}", reference):
             raise TreeError("ADR reference must be ADR-NNNN")
         title = _text(title, "ADR title", limit=300)
-        rationale = _text(rationale, "ADR rationale")
+        rationale = _text(rationale, "ADR rationale", multiline=True)
         actor = _text(actor, "actor", limit=300)
         if supersedes_id is not None:
             self.architecture_decision(project_id, supersedes_id)
@@ -341,7 +347,7 @@ class GovernanceCommands:
                for x in self._architecture_decisions.values()):
             raise TreeError("ADR reference already exists")
         item = ArchitectureDecision(self._allocate_id(), project_id, reference, title, rationale,
-                                    actor, supersedes_id=supersedes_id)
+                                    actor, datetime.now(timezone.utc), supersedes_id=supersedes_id)
         event = self._event(project_id, "architecture_decision.propose", "architecture_decision",
                             item.id, None, item, actor=actor, rationale=rationale)
         self._publish("_architecture_decisions", {**self._architecture_decisions, item.id: item}, event)
@@ -361,11 +367,12 @@ class GovernanceCommands:
             self.node(project_id, node_id)
         actor = _text(actor, "actor", limit=300)
         action = _text(action, "action", limit=300)
-        rationale = _text(rationale, "decision rationale")
+        rationale = _text(rationale, "decision rationale", multiline=True)
         previous_value = _text(previous_value, "previous value", allow_blank=True)
         proposed_value = _text(proposed_value, "proposed value")
         item = DecisionProposal(self._allocate_id(), project_id, node_id, actor, action,
-                                rationale, previous_value, proposed_value)
+                                rationale, previous_value, proposed_value,
+                                datetime.now(timezone.utc))
         event = self._event(project_id, "decision.propose", "decision_proposal", item.id,
                             None, item, actor=actor, rationale=rationale)
         self._publish("_decision_proposals", {**self._decision_proposals, item.id: item}, event)
