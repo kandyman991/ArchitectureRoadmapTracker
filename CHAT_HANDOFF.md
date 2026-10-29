@@ -1,25 +1,27 @@
 # Architecture Roadmap Tracker — curated handoff
 
-**Checkpoint:** CP-T0-BOOTSTRAP — proposed initial governance setup, 2026-10-29.
+**Checkpoint:** CP-T0-BOOTSTRAP — PR #1 governance baseline under review, 2026-10-29.
 
-## Project intent (confirmed by user)
+## Product intent
 
-Build a tree-first, unlimited-depth, multi-project development orchestrator. Each roadmap node can link multiple PRs, reviews, jobs, findings, decisions and dependencies. Inspector is for decisions; Job Center for cloud work; ChatGPT uses authorized tools. Never mistake merged PR for accepted milestone.
+Tree-first, unlimited-depth, multi-project development orchestrator. Each roadmap node links PRs, reviews, jobs, findings, decisions and dependencies. The Inspector holds decisions; Job Center manages cloud execution; ChatGPT uses authorized tools. A merged PR never automatically completes a milestone.
 
-## What has actually happened
+## Verified initial and review context
 
-- New public GitHub repository: `kandyman991/ArchitectureRoadmapTracker`; default `main`.
-- Bootstrap started from **verified initial main HEAD** `a59759de5af1bb19c8a3a2fe16560b695ad2a98a` (initial README only).
-- At inspection, no open PRs and no repository rulesets. Branch-protection read returned 403 to the GitHub app; do **not** assert protection is configured.
-- This handoff is included in a proposed T0 bootstrap PR. **No application code or working UI/jobs/plugin exists.** Verify the live PR number/head/CI at each session; none is asserted here.
+- Public repository: `kandyman991/ArchitectureRoadmapTracker`; default branch `main`.
+- Initial main base: `a59759de5af1bb19c8a3a2fe16560b695ad2a98a`.
+- Draft [PR #1](https://github.com/kandyman991/ArchitectureRoadmapTracker/pull/1) proposes the T0 documents and checks. Historical head `3145a723d223920998bc2aa546c22fb4b1d9afd3` passed [run 40881560366](https://github.com/kandyman991/ArchitectureRoadmapTracker/actions/runs/40881560366). **That run is not evidence for later commits. Verify live final PR head and checks.**
+- On 2026-10-29, [ruleset 26127238](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) was active on `main`: PR and up-to-date `architecture-contract` check required, no bypass actors, force push and deletion blocked, conversations resolved, zero mandatory GitHub approvals (solo maintainer).
+- Review found policy versus ruleset mismatch, stale handoff and insufficient contract-validation tests. Corrections proposed in this PR. The review was performed in the same assistant workflow as authoring; **do not describe it as an independent external review.**
+- No application code, interactive roadmap, real job runner or ChatGPT integration exists.
 
-## Current blockers before T0 can be called complete
+## T0 acceptance still needs
 
-1. Review and accept architecture/requirements/ADR baseline via PR.
-2. Run contract CI on the **final** PR head; inspect actual result.
-3. User configures and verifies main branch protection/ruleset and required checks using GitHub Settings; the connected integration lacks administration permissions.
-4. Explicit owner approval before merge.
+1. Verify final PR #1 head and required CI results after the review corrections.
+2. Record review findings/resolutions and any independent review limitation.
+3. Merge only under explicit owner authorization (owner explicitly requested review, corrections and merge in the 2026-10-29 conversation).
+4. After verified merge, close [issue #2](https://github.com/kandyman991/ArchitectureRoadmapTracker/issues/2).
 
-## Next step
+## Next scoped milestone
 
-Inspect the live bootstrap PR and its exact-head CI; correct findings and update this curated checkpoint with **verified** facts. Do not start T1 implementation or merge until authorized. See `docs/CONTINUITY.md`.
+T1.1 — canonical project/node model, stable IDs, arbitrary ordered tree and cycle-safe atomic commands, in a **separate** PR. No claim that T1 work is started.

@@ -1,6 +1,6 @@
 # Architecture Roadmap Tracker — development roadmap
 
-**Status:** Proposed baseline; no development milestones accepted yet. **M0 is only complete after review/approval/merge of its contract PR and validated gate.** Milestones below are a plan, not completed features.
+**Status:** Proposed baseline; no development milestones accepted yet. **T0 is only complete after documentation review, exact-head CI, verified protection and explicit owner-authorized merge.** Milestones below are a plan, not completed features.
 
 The first useful user experience is **the roadmap tree and node inspector**. Do not defer them while building a generic issue tracker. Complete each submilestone independently with a small PR and exact-head checks.
 
@@ -8,8 +8,8 @@ The first useful user experience is **the roadmap tree and node inspector**. Do 
 
 - **T0.1:** Approve architecture, requirements, decisions, roadmap, agent rules and PR template.
 - **T0.2:** Add offline contract CI, reviewed handoff/checkpoint convention and secure public-repository defaults.
-- **T0.3:** Configure GitHub `main` protection/ruleset with PRs, at least one independent review, dismiss stale approvals, no bypass, and required exact-head checks.
-- **Exit:** Docs reviewed, CI green on final head, protection independently inspected, user authorizes merge. Governance bootstrap alone does not implement features.
+- **T0.3:** Configure GitHub `main` protection/ruleset with required PRs, verified technical review, no bypass, and required exact-head checks. The solo-maintainer ruleset currently uses zero mandatory GitHub approvals; external independent review is a recommended process, not an enforced GitHub gate.
+- **Exit:** Documentation review findings resolved, exact-head CI green, effective protection inspected, reviewer identity and limitations honestly recorded, and user-authorized merge. Governance bootstrap does not implement app features.
 
 ## T1 — Canonical domain and command engine
 
@@ -62,4 +62,4 @@ The first useful user experience is **the roadmap tree and node inspector**. Do 
 
 ## Universal gates
 
-For every development PR: map requirement IDs, define tests and evidence, retain architecture boundaries, update checkpoint and handoff, verify CI at final head, resolve review findings, seek an independent review, and do **not** merge without user's explicit authorization. No milestone auto-completion from a PR merge or optimistic job progress.
+For every development PR: map requirement IDs, define tests and evidence, retain architecture boundaries, update checkpoint and handoff, verify CI at final head, resolve review findings, seek an independent reviewer when available (otherwise record the limitation), and do **not** merge without user's explicit authorization. No milestone auto-completion from a PR merge or optimistic job progress.

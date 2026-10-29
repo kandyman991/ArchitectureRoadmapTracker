@@ -15,7 +15,7 @@ This file defines an operational process. It is **not** evidence that the app or
 - Branch from latest `main`; no direct pushes to `main`. Keep PR scoped to one small submilestone.
 - Update tests alongside changes. Every claim of verification must cite exact commit SHA, check run and observed result; a pending check is not passed.
 - Link requirement `ART-xxx`, implementation evidence and review findings. Reject stale findings/CI from prior heads.
-- Require a separate independent review and no unapproved merge. If owner is sole collaborator, record that independent AI review does **not** replace GitHub's required human review setting; account/plan limitations may require adding a reviewer.
+- Seek a separate independent reviewer; when unavailable, record the reviewer's identity and limitation honestly. An author/self-review is not independent. The current solo-maintainer ruleset requires **zero GitHub approvals**, so review quality is a documented process responsibility, not a GitHub-enforced approval. No merges without explicit owner authorization.
 - Any deviation in a locked architectural boundary requires proposed ADR approval first.
 
 ## Handoff
@@ -26,13 +26,15 @@ Curate `CHAT_HANDOFF.md` and `docs/CHECKPOINTS.md` at milestone/PR boundaries. I
 
 In `Settings → Rules → Rulesets` (or branch protection for `main` where available), enable:
 - Require a pull request before merging; no direct pushes and no force pushes or deletions.
-- Require at least one approved independent review and dismiss stale approvals on new commits where available.
+- The solo-maintainer ruleset may use zero GitHub approvals to avoid deadlock; seek separate independent review as a process and document reviewer limitations. Increase required approvals when independent collaborators are available. Dismiss stale approvals on new commits where available.
 - Require successful status check **`architecture-contract`** from the `Architecture contract` workflow, and require branch up to date before merge (when supported).
 - Block unresolved conversations; limit bypass permissions and administrators according to supported account/repository rules.
 - Do not turn on an overly broad required check that does not run on every PR; re-evaluate required checks when CI changes.
 - Configure repository Actions permissions as read-only by default and limit approved action provenance.
 
-**Important:** Public personal repositories, plan types and ruleset UI availability vary. Inspect actual effective protection before claiming enforcement; a policy described here is NOT equivalent to a configured GitHub rule.
+**Verified on 2026-10-29:** [Main Branch Protection](https://github.com/kandyman991/ArchitectureRoadmapTracker/rules/26127238) was active on the default branch: PR required, zero mandatory GitHub approvals, dismiss stale reviews, resolve conversations, strict required status check `architecture-contract`, block deletion and force push, and no bypass actors. Inspect live settings again each session. The contract workflow checks the documentation baseline, not future application architecture or independent review.
+
+**Important:** Ruleset state and available controls may change. A documented policy is not evidence of effective GitHub protection.
 
 ## Initial work model
 

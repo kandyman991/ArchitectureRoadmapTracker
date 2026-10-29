@@ -19,7 +19,7 @@
 - [ ] One scoped submilestone; no unrelated work
 - [ ] Canonical tree, command/evidence/approval boundaries preserved
 - [ ] Requirements and acceptance criteria explicitly traced
-- [ ] CI and independent review verified on final head (not older revision)
+- [ ] CI verified on final head and reviewer identity/limitations recorded
 - [ ] No blockers, regressions, secrets or real private fixtures
 - [ ] `CHAT_HANDOFF.md` and `docs/CHECKPOINTS.md` updated at boundary
 - [ ] Owner authorization requested; **not merged by agent without approval**
