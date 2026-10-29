@@ -60,19 +60,25 @@ class ShellService:
             for project in projects:
                 outline = project_outline(engine, project.id)
                 parent_ids = {row.node.parent_id for row in outline}
-                outlines[project.id] = [
-                    {
-                        "id": row.node.id,
-                        "project_id": row.node.project_id,
-                        "parent_id": row.node.parent_id,
-                        "position": row.node.position,
+                effective_archive: dict[str, bool] = {}
+                rows = []
+                for row in outline:
+                    node = row.node
+                    inherited = effective_archive.get(node.parent_id, False)
+                    effective_archive[node.id] = node.archived or inherited
+                    rows.append({
+                        "id": node.id,
+                        "project_id": node.project_id,
+                        "parent_id": node.parent_id,
+                        "position": node.position,
                         "depth": row.depth,
-                        "has_children": row.node.id in parent_ids,
-                        "title": row.node.title,
-                        "kind": row.node.kind.value,
-                        "archived": row.node.archived,
-                    } for row in outline
-                ]
+                        "has_children": node.id in parent_ids,
+                        "title": node.title,
+                        "kind": node.kind.value,
+                        "archived": node.archived,
+                        "effectively_archived": effective_archive[node.id],
+                    })
+                outlines[project.id] = rows
             return {
                 "revision": engine.storage_revision,
                 "projects": [{"id": p.id, "name": p.name} for p in projects],
